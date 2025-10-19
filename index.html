@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+
 <html lang="zh">
 <head>
-  <meta charset="UTF-8" />
-  <title>一直在想你</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
-  <style>
+<meta charset="utf-8"/>
+<title>一直在想你</title>
+<meta content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" name="viewport"/>
+<style>
     :root {
       --color-main: #4A0A8A;
       --color-main-grad: #6A0DAD;
@@ -86,11 +87,11 @@
       z-index: 3;
       text-align: center;
       user-select: none;
-      pointer-events: none;
     }
 
+    /* 可点击的标题 */
     .love-saying {
-      font-size: 3.5em;
+      font-size: 4.5em;
       font-weight: bold;
       color: var(--color-pink);
       letter-spacing: .16em;
@@ -105,6 +106,12 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
       margin-bottom: 1em;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .love-saying:hover {
+      transform: scale(1.05);
     }
     
     @keyframes romancePulse {
@@ -132,6 +139,7 @@
       width: 100%;
       box-sizing: border-box;
       margin-bottom: 2em;
+      pointer-events: none;
     }
     
     .time-line {
@@ -158,7 +166,7 @@
     }
     
     .days-value {
-      font-size: 3.5em; /* 最大 */
+      font-size: 4.5em; /* 最大 */
     }
     
     .hours-value {
@@ -166,7 +174,7 @@
     }
     
     .minutes-value {
-      font-size: 2.5em;
+      font-size: 3em;
     }
     
     .seconds-value {
@@ -183,7 +191,7 @@
       100% { transform:translateY(0);}
     }
 
-    /* 大爱心样式 - 修复移动端显示 */
+    /* 大爱心样式 - 可点击 */
     .heart-container {
       position: relative;
       width: 100%;
@@ -192,6 +200,7 @@
       justify-content: center;
       align-items: center;
       margin-top: 0.5em;
+      cursor: pointer;
     }
     
     .heart {
@@ -202,9 +211,11 @@
       filter: drop-shadow(0 0 25px rgba(255, 107, 157, 0.9));
       z-index: 2;
       transform-origin: center;
-      /* 确保在移动设备上正确显示 */
-      -webkit-transform-origin: center;
-      -moz-transform-origin: center;
+      transition: all 0.3s;
+    }
+    
+    .heart:hover {
+      transform: scale(1.1);
     }
     
     /* 使用SVG方式创建爱心，兼容性更好 */
@@ -245,8 +256,6 @@
       animation: pulse 1.2s infinite;
       z-index: 1;
       transform-origin: center;
-      -webkit-transform-origin: center;
-      -moz-transform-origin: center;
     }
     
     @keyframes pulse {
@@ -488,34 +497,6 @@
       }
     }
 
-    /* 点击反馈 */
-    .touch-tip {
-      position: fixed;
-      left: 50%; 
-      top: 50%;
-      transform: translate(-50%,-50%);
-      font-size: 1.3em;
-      padding: 0.6em 1.8em;
-      background: rgba(124,0,180,0.15);
-      color: var(--color-cyan);
-      border-radius: 99em;
-      z-index: 30;
-      pointer-events: none;
-      opacity: 0;
-      transition: .5s;
-    }
-    
-    .touch-tip.show {
-      opacity: 1;
-    }
-
-    /* 烟花粒子特效 */
-    .firework {
-      position: fixed;
-      pointer-events: none;
-      z-index: 20;
-    }
-
     /* 响应式设计 - 优化移动端显示 */
     @media (max-width: 768px) {
       .main-content {
@@ -523,7 +504,7 @@
       }
       
       .love-saying {
-        font-size: 2.5em;
+        font-size: 3em;
       }
       
       .love-time {
@@ -548,7 +529,7 @@
       }
       
       .fullscreen-effect .effect-text {
-        font-size: 2.5em;
+        font-size: 3em;
       }
       
       .note-button {
@@ -625,106 +606,96 @@
   </style>
 </head>
 <body>
-  <!-- 深邃星空背景 -->
-  <div class="stars-background"></div>
-  
-  <!-- 背景Canvas -->
-  <canvas id="bgCanvas"></canvas>
-  <canvas id="particleCanvas"></canvas>
-
-  <!-- 全屏特效 -->
-  <div class="fullscreen-effect" id="fullscreenEffect">
-    <div class="effect-bg"></div>
-    <div class="effect-text" id="effectText">💖</div>
-  </div>
-
-  <!-- 打卡便签弹窗 -->
-  <div class="note-modal" id="noteModal">
-    <div class="note-content">
-      <div class="note-header">
-        <h2 class="note-title">想你的每一天 💌</h2>
-        <button class="close-button" id="closeNote">✕</button>
-      </div>
-      <div class="week-navigation">
-        <button class="nav-button" id="prevWeek">上一周</button>
-        <div class="week-title" id="weekTitle">第1周</div>
-        <button class="nav-button" id="nextWeek">下一周</button>
-      </div>
-      <ul class="note-list" id="noteList">
-        <!-- 便签内容将通过JavaScript动态生成 -->
-      </ul>
-    </div>
-  </div>
-
-  <!-- 主要内容区域 -->
-  <div class="main-content">
-    <div class="love-saying">一直在想你</div>
-    <div class="love-time" id="loveTime">
-      <div class="time-line">
-        <span class="time-label">想你了</span>
-      </div>
-      <div class="time-line" style="height: 0.5em;"></div> <!-- 间隔行 -->
-      <div class="time-line">
-        <span class="time-value days-value" id="days">0</span>
-        <span class="time-label">天</span>
-      </div>
-      <div class="time-line">
-        <span class="time-value hours-value" id="hours">00</span>
-        <span class="time-label">小时</span>
-      </div>
-      <div class="time-line">
-        <span class="time-value minutes-value" id="minutes">00</span>
-        <span class="time-label">分钟</span>
-      </div>
-      <div class="time-line">
-        <span class="time-value seconds-value" id="seconds">00</span>
-        <span class="time-label">秒</span>
-      </div>
-      <div class="time-line">
-        <span class="time-value milliseconds-value" id="milliseconds">000</span>
-        <span class="time-label">毫秒</span>
-      </div>
-    </div>
-    <div class="heart-container">
-      <div class="heart-pulse"></div>
-      <div class="heart">
-        <!-- 使用SVG爱心，兼容性更好 -->
-        <svg viewBox="0 0 32 29.6">
-          <path d="M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2
-          c6.1-9.3,16-12.1,16-21.2C32,3.8,28.2,0,23.6,0z"/>
-        </svg>
-      </div>
-    </div>
-  </div>
-
-  <!-- 打卡便签按钮 -->
-  <button class="note-button" id="noteButton">打卡便签 💝</button>
-  
-  <!-- 点击反馈 -->
-  <div class="touch-tip" id="tip">点一点，有惊喜～</div>
-
-  <script>
+<!-- 深邃星空背景 -->
+<div class="stars-background"></div>
+<!-- 背景Canvas -->
+<canvas id="bgCanvas"></canvas>
+<canvas id="particleCanvas"></canvas>
+<!-- 全屏特效 -->
+<div class="fullscreen-effect" id="fullscreenEffect">
+<div class="effect-bg"></div>
+<div class="effect-text" id="effectText">💖</div>
+</div>
+<!-- 打卡便签弹窗 -->
+<div class="note-modal" id="noteModal">
+<div class="note-content">
+<div class="note-header">
+<h2 class="note-title">想你的每一天 💌</h2>
+<button class="close-button" id="closeNote">✕</button>
+</div>
+<div class="week-navigation">
+<button class="nav-button" id="prevWeek">上一周</button>
+<div class="week-title" id="weekTitle">第1周</div>
+<button class="nav-button" id="nextWeek">下一周</button>
+</div>
+<ul class="note-list" id="noteList">
+<!-- 便签内容将通过JavaScript动态生成 -->
+</ul>
+</div>
+</div>
+<!-- 主要内容区域 -->
+<div class="main-content">
+<!-- 可点击的标题 -->
+<div class="love-saying" id="loveSaying">TaiTugou一直在想你</div>
+<div class="love-time" id="loveTime">
+<div class="time-line">
+<span class="time-label">想你了</span>
+</div>
+<div class="time-line" style="height: 0.5em;"></div> <!-- 间隔行 -->
+<div class="time-line">
+<span class="time-value days-value" id="days">0</span>
+<span class="time-label">天</span>
+</div>
+<div class="time-line">
+<span class="time-value hours-value" id="hours">00</span>
+<span class="time-label">小时</span>
+</div>
+<div class="time-line">
+<span class="time-value minutes-value" id="minutes">00</span>
+<span class="time-label">分钟</span>
+</div>
+<div class="time-line">
+<span class="time-value seconds-value" id="seconds">00</span>
+<span class="time-label">秒</span>
+</div>
+<div class="time-line">
+<span class="time-value milliseconds-value" id="milliseconds">000</span>
+<span class="time-label">毫秒</span>
+</div>
+</div>
+<!-- 可点击的爱心 -->
+<div class="heart-container" id="heartContainer">
+<div class="heart-pulse"></div>
+<div class="heart">
+<!-- 使用SVG爱心，兼容性更好 -->
+<svg viewbox="0 0 32 29.6">
+<path d="M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2
+          c6.1-9.3,16-12.1,16-21.2C32,3.8,28.2,0,23.6,0z"></path>
+</svg>
+</div>
+</div>
+</div>
+<!-- 打卡便签按钮 -->
+<button class="note-button" id="noteButton">打卡便签 💝</button>
+<script>
     // 配置参数
     const CONFIG = {
       startDate: "2025-10-18T13:28:07",
-      clickThreshold: 10,
-      timeWindow: 10000, // 10秒时间窗口
     };
 
-    // 每天不同的特殊消息
+    // 每天不同的特殊消息 - 您可以在这里修改
     const dailyMessages = [
-      "老婆等我回家[流泪]\n好想马上见到你",
-      "今天也是超级想你的一天\n每一秒都在期待重逢",
-      "我们的爱跨越时空\n距离让思念更浓",
-      "你是我心中最亮的星\n照亮我回家的路",
-      "想你的心跳声\n隔着屏幕你听到了吗",
-      "爱你的第N天\n每一天都比昨天更爱你",
-      "马上就能拥抱你了\n这个念头让我充满力量"
+      "周一：没想到每天不一样吧，新的一周开始了，更加想你了💕",
+      "周二：距离周末又近了一天，期待见到你✨",
+      "周三：一周过半，思念却越来越浓🌹",
+      "周四：快要见到你了，心情开始激动🌟",
+      "周五：明天中午就能相见了，无比期待💖",
+      "周六：终于等到这一天，好想马上见到你，中午等我🎉",
+      "周日：珍惜和你在一起的每一分每一秒💝"
     ];
 
     // 状态管理
     const state = {
-      clickTimestamps: [],
       currentWeek: 0,
       notes: JSON.parse(localStorage.getItem('loveNotes')) || [],
       effectTimeout: null
@@ -736,19 +707,20 @@
       particleCanvas: document.getElementById('particleCanvas'),
       fullscreenEffect: document.getElementById('fullscreenEffect'),
       effectText: document.getElementById('effectText'),
+      loveSaying: document.getElementById('loveSaying'),
       days: document.getElementById('days'),
       hours: document.getElementById('hours'),
       minutes: document.getElementById('minutes'),
       seconds: document.getElementById('seconds'),
       milliseconds: document.getElementById('milliseconds'),
+      heartContainer: document.getElementById('heartContainer'),
       noteButton: document.getElementById('noteButton'),
       noteModal: document.getElementById('noteModal'),
       closeNote: document.getElementById('closeNote'),
       noteList: document.getElementById('noteList'),
       prevWeek: document.getElementById('prevWeek'),
       nextWeek: document.getElementById('nextWeek'),
-      weekTitle: document.getElementById('weekTitle'),
-      tip: document.getElementById('tip')
+      weekTitle: document.getElementById('weekTitle')
     };
 
     // 初始化
@@ -758,18 +730,6 @@
       setupEventListeners();
       startTimer();
       generateAllNotes();
-      
-      // 检测移动设备并应用相应优化
-      detectMobileAndOptimize();
-    }
-
-    // 检测移动设备并优化
-    function detectMobileAndOptimize() {
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      if (isMobile) {
-        console.log("移动设备检测到，应用优化");
-        // 可以在这里添加移动设备特定的优化
-      }
     }
 
     // 设置背景
@@ -797,25 +757,6 @@
         bgCtx.fillStyle = gradient;
         bgCtx.fillRect(0, 0, w, h);
         
-        // 浮动光斑
-        for(let i = 1; i <= 6; i++) {
-          const r = Math.abs(Math.sin(Date.now() / 4000 + i)) * 0.3 + 0.2;
-          const gx = w * [0.1, 0.9, 0.7, 0.3, 0.8, 0.2][i - 1];
-          const gy = h * [0.2, 0.3, 0.8, 0.6, 0.4, 0.7][i - 1];
-          const grad = bgCtx.createRadialGradient(gx, gy, 0, gx, gy, r * w / 2);
-          
-          grad.addColorStop(0, "rgba(180,70,255,0.08)");
-          grad.addColorStop(0.7, "rgba(106,13,173,0.05)");
-          grad.addColorStop(1, "rgba(10,0,40,0)");
-          
-          bgCtx.beginPath();
-          bgCtx.arc(gx, gy, r * w / 2, 0, 2 * Math.PI);
-          bgCtx.fillStyle = grad;
-          bgCtx.globalAlpha = 0.4;
-          bgCtx.fill();
-          bgCtx.globalAlpha = 1;
-        }
-        
         requestAnimationFrame(drawBackground);
       }
       
@@ -840,7 +781,6 @@
       resizeParticleCanvas();
       window.addEventListener('resize', resizeParticleCanvas);
       
-      // 简化粒子系统 - 只绘制爱心形状
       function drawParticles() {
         pCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
         
@@ -868,8 +808,13 @@
 
     // 设置事件监听
     function setupEventListeners() {
-      document.addEventListener('click', handleClick);
-      document.addEventListener('touchstart', handleTouch, { passive: true });
+      // 点击爱心显示全屏特效
+      elements.heartContainer.addEventListener('click', showHeartEffect);
+      elements.heartContainer.addEventListener('touchstart', showHeartEffect, { passive: true });
+      
+      // 点击标题显示每日消息
+      elements.loveSaying.addEventListener('click', showDailyMessage);
+      elements.loveSaying.addEventListener('touchstart', showDailyMessage, { passive: true });
       
       // 便签功能
       elements.noteButton.addEventListener('click', openNoteModal);
@@ -885,158 +830,53 @@
       });
     }
 
-    // 处理点击事件
-    function handleClick(event) {
-      processInteraction(event.clientX, event.clientY);
-    }
-
-    // 处理触摸事件
-    function handleTouch(event) {
-      if(event.touches.length >= 1) {
-        processInteraction(event.touches[0].clientX, event.touches[0].clientY);
-      }
-    }
-
-    // 处理交互
-    function processInteraction(x, y) {
-      const now = Date.now();
-      
-      // 记录点击时间戳
-      state.clickTimestamps.push(now);
-      
-      // 清理10秒前的点击记录
-      state.clickTimestamps = state.clickTimestamps.filter(
-        timestamp => now - timestamp <= CONFIG.timeWindow
-      );
-      
-      // 计算当前点击次数
-      const clickCount = state.clickTimestamps.length;
-      
-      // 显示点击反馈
-      showClickFeedback(x, y);
-      
-      // 触发烟花特效
-      createFirework(x, y);
-      
-      // 检查是否触发特殊消息（10秒内点击10次）
-      if (clickCount >= CONFIG.clickThreshold) {
-        showDailySpecialMessage();
-        // 重置点击计数
-        state.clickTimestamps = [];
-      } else {
-        // 普通点击显示爱心特效
-        showHeartEffect();
-      }
-    }
-
-    // 显示点击反馈
-    function showClickFeedback(x, y) {
-      elements.tip.textContent = "💘一直在想你💘";
-      elements.tip.style.left = x + 'px';
-      elements.tip.style.top = y + 'px';
-      elements.tip.classList.add('show');
-      
-      setTimeout(() => {
-        elements.tip.classList.remove('show');
-      }, 1000);
-    }
-
-    // 创建烟花特效
-    function createFirework(x, y) {
-      const firework = document.createElement('div');
-      firework.className = 'firework';
-      firework.style.left = x + 'px';
-      firework.style.top = y + 'px';
-      document.body.appendChild(firework);
-      
-      // 创建多个粒子
-      for (let i = 0; i < 12; i++) {
-        const particle = document.createElement('div');
-        particle.style.position = 'absolute';
-        particle.style.width = '6px';
-        particle.style.height = '6px';
-        particle.style.borderRadius = '50%';
-        particle.style.background = `hsl(${Math.random() * 360}, 100%, 65%)`;
-        particle.style.boxShadow = '0 0 8px currentColor';
-        
-        const angle = (i / 12) * Math.PI * 2;
-        const distance = 50 + Math.random() * 50;
-        const duration = 800 + Math.random() * 400;
-        
-        particle.style.transition = `all ${duration}ms ease-out`;
-        firework.appendChild(particle);
-        
-        // 触发动画
-        setTimeout(() => {
-          particle.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px)`;
-          particle.style.opacity = '0';
-        }, 10);
-      }
-      
-      // 清理DOM
-      setTimeout(() => {
-        if (document.body.contains(firework)) {
-          document.body.removeChild(firework);
-        }
-      }, 1500);
-    }
-
     // 显示爱心特效
-    function showHeartEffect() {
-      // 清除之前的超时
-      if (state.effectTimeout) {
-        clearTimeout(state.effectTimeout);
-      }
-      
-      // 设置爱心内容
-      elements.effectText.textContent = "💖";
-      
-      // 确保特效是隐藏状态
-      elements.fullscreenEffect.classList.remove('active');
-      
-      // 强制重绘
-      void elements.fullscreenEffect.offsetWidth;
-      
-      // 显示特效
-      elements.fullscreenEffect.classList.add('active');
-      
-      // 设置隐藏超时
-      state.effectTimeout = setTimeout(() => {
-        elements.fullscreenEffect.classList.remove('active');
-      }, 2000);
-    }
+    let heartClickCount = 0; // 记录点击次数
 
-    // 显示每天不同的特殊消息
-    function showDailySpecialMessage() {
-      // 清除之前的超时
-      if (state.effectTimeout) {
-        clearTimeout(state.effectTimeout);
-      }
-      
-      // 根据星期几选择消息（0=周日，1=周一，...）
-      const today = new Date();
-      const dayOfWeek = today.getDay();
-      // 如果是周日(0)，使用最后一条消息，否则使用对应的消息
-      const messageIndex = dayOfWeek === 0 ? dailyMessages.length - 1 : dayOfWeek - 1;
-      const dailyMessage = dailyMessages[messageIndex];
-      
-      // 设置特殊消息内容
-      elements.effectText.textContent = dailyMessage;
-      
-      // 确保特效是隐藏状态
-      elements.fullscreenEffect.classList.remove('active');
-      
-      // 强制重绘
-      void elements.fullscreenEffect.offsetWidth;
-      
-      // 显示特效
-      elements.fullscreenEffect.classList.add('active');
-      
-      // 设置隐藏超时
-      state.effectTimeout = setTimeout(() => {
-        elements.fullscreenEffect.classList.remove('active');
-      }, 4000); // 特殊消息显示时间更长
-    }
+function showHeartEffect() {
+  heartClickCount++;
+
+  const base = document.getElementById('fullscreenEffect');
+  if (!base) return;
+  const clone = base.cloneNode(true);
+  clone.id = '';
+  clone.classList.add('active');
+
+  const textEl = clone.querySelector('.effect-text');
+  if (heartClickCount >= 10) {
+    if (textEl) textEl.textContent = '老婆，等我回家😭';
+    heartClickCount = 0; // 重置计数
+  } else {
+    if (textEl) textEl.textContent = '💖';
+  }
+
+  document.body.appendChild(clone);
+  setTimeout(() => {
+    try { clone.remove(); } catch (e) {}
+  }, 2200);
+}
+
+
+
+    // 显示每天不同的消息
+    function showDailyMessage() {
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const messageIndex = dayOfWeek === 0 ? dailyMessages.length - 1 : dayOfWeek - 1;
+  const dailyMessage = dailyMessages[messageIndex] || '';
+  const base = document.getElementById('fullscreenEffect');
+  if (!base) return;
+  const clone = base.cloneNode(true);
+  clone.id = '';
+  clone.classList.add('active');
+  const textEl = clone.querySelector('.effect-text');
+  if (textEl) textEl.textContent = dailyMessage;
+  document.body.appendChild(clone);
+  setTimeout(() => {
+    try { clone.remove(); } catch (e) {}
+  }, 4200);
+}
+
 
     // 启动计时器
     function startTimer() {
