@@ -766,6 +766,7 @@
       setupEventListeners();
       startTimer();
       generateAllNotes();
+      state.currentWeek = Math.ceil(state.notes.length / 7) - 1;
     }
 
     // 设置背景
@@ -972,7 +973,7 @@ function showHeartEffect() {
         currentDate.setDate(currentDate.getDate() + 1);
       }
       
-      state.notes = notes.reverse(); // 最新的在前面
+      state.notes = notes; // 最新的在前面
       localStorage.setItem('loveNotes', JSON.stringify(state.notes));
     }
 
