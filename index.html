@@ -1,1042 +1,602 @@
 <!DOCTYPE html>
-
 <html lang="zh">
 <head>
 <meta charset="utf-8"/>
 <title>一直在想你</title>
-<meta content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" name="viewport"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <style>
-    :root {
-      --color-main: #4A0A8A;
-      --color-main-grad: #6A0DAD;
-      --color-deep-purple: #2D0047;
-      --color-dark-blue: #0A0028;
-      --color-cyan: #00ffff;
-      --color-white: #ffffff;
-      --color-pink: #ff6b9d;
-      --color-shadow1: #00ffff;
-      --color-shadow2: #6a0dad;
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    html, body {
-      min-height: 100vh;
-      min-width: 100vw;
-      width: 100vw;
-      height: 100vh; 
-      height: auto;          /* 自动高度 */
-      overflow-y: auto;      /* 允许上下滚动 */
-      background: linear-gradient(135deg, var(--color-dark-blue) 0%, var(--color-deep-purple) 40%, var(--color-main) 80%, var(--color-main-grad) 100%);
-      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "STKaiti", "Segoe UI", Arial, cursive, sans-serif;
-      color: var(--color-white);
-    }
-
-    body {
-      position: relative;
-      overflow-y: auto;   
-      overscroll-behavior: none;
-    }
-
-    /* 背景元素 */
-    #bgCanvas, #particleCanvas {
-      position: fixed;
-      left: 0; 
-      top: 0; 
-      z-index: 0;
-      width: 100vw !important;
-      height: 100vh !important;
-      display: block;
-    }
-
-    .stars-background {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -1;
-      background: 
-        radial-gradient(2px 2px at 20px 30px, #eee, transparent),
-        radial-gradient(2px 2px at 40px 70px, #fff, transparent),
-        radial-gradient(1px 1px at 90px 40px, #fff, transparent),
-        radial-gradient(1px 1px at 130px 80px, #fff, transparent),
-        radial-gradient(2px 2px at 160px 30px, #ddd, transparent);
-      background-repeat: repeat;
-      background-size: 200px 100px;
-      opacity: 0.3;
-      animation: twinkle 4s infinite alternate;
-    }
-    
-    @keyframes twinkle {
-      0%, 100% { opacity: 0.2; }
-      50% { opacity: 0.4; }
-    }
-
-    /* 主要内容区域 */
-    .main-content {
-  position: relative;   /* 或 static */
-  left: auto;
-  top: auto;
-  transform: none;      /* 去掉 translate */
-  margin: 20px auto;    /* 居中显示 */
-  width: 90%;
-  max-width: 800px;
-  text-align: center;
-}
-
-    /* 可点击的标题 */
-    .love-saying {
-      font-size: 4.5em;
-      font-weight: bold;
-      color: var(--color-pink);
-      letter-spacing: .16em;
-      padding-bottom: .15em;
-      text-shadow:
-        0 0 30px var(--color-shadow1),
-        0 0 25px var(--color-shadow2),
-        2px 3px 2px #0005;
-      animation: romancePulse 2.8s infinite cubic-bezier(.77,0,.17,1);
-      background: linear-gradient(90deg, var(--color-pink) 10%, var(--color-cyan) 90%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 1em;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    
-    .love-saying:hover {
-      transform: scale(1.05);
-    }
-    
-    @keyframes romancePulse {
-      0% { transform:translateY(0) scale(1);}
-      45%{ transform:translateY(-12px) scale(1.12);}
-      100%{transform:translateY(0) scale(1);}
-    }
-
-    /* 倒计时样式 - 数字字体大小递增 */
-    .love-time {
-      padding: 1.5em 0.8em;
-      border-radius: 20px;
-      background: rgba(255, 255, 255, 0.08);
-      box-shadow: 
-        0 0 40px 6px rgba(0, 255, 255, 0.25) inset,
-        0 0 60px 4px rgba(255, 107, 157, 0.3);
-      mix-blend-mode: normal;
-      transition: all .3s;
-      animation: floatText 4.8s ease-in-out infinite alternate;
-      display: block;
-      position: relative;
-      overflow: hidden;
-      backdrop-filter: blur(15px);
-      border: 3px solid rgba(255, 255, 255, 0.2);
-      width: 100%;
-      box-sizing: border-box;
-      margin-bottom: 2em;
-      pointer-events: none;
-    }
-    
-    .time-line {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin: 0.5em 0;
-      line-height: 1.2;
-    }
-    
-    .time-label {
-  font-size: 1.2em;
-  font-weight: 600;
-  color: var(--color-white);
-  text-shadow: 0 0 10px var(--color-cyan);
-  margin-right: 0.5em;
-}
-
-/* 单独让“想你了”更大更粉色 */
-.love-time .time-line:first-child .time-label {
-  font-size: 2em;              /* 字体更大 */
-  color: var(--color-pink);    /* 改成粉色 */
-  text-shadow: 0 0 15px var(--color-pink); /* 粉色光晕 */
-  margin-right: 0;             /* 去掉右边距，让它居中 */
-}
-    
-    /* 数字字体大小递增 */
-    .time-value {
-      font-weight: 800;
-      color: var(--color-cyan);
-      text-shadow: 0 0 15px var(--color-cyan);
-    }
-    
-    .days-value {
-      font-size: 4.5em; /* 最大 */
-    }
-    
-    .hours-value {
-      font-size: 3em;
-    }
-    
-    .minutes-value {
-      font-size: 3em;
-    }
-    
-    .seconds-value {
-      font-size: 2em;
-    }
-    
-    .milliseconds-value {
-      font-size: 1.5em; /* 最小 */
-    }
-
-    @keyframes floatText {
-      0%   { transform:translateY(0);}
-      40%  { transform:translateY(-6px);}
-      100% { transform:translateY(0);}
-    }
-
-    /* 大爱心样式 - 可点击 */
-    .heart-container {
-      position: relative;
-      width: 100%;
-      height: 180px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-top: 0.5em;
-      cursor: pointer;
-    }
-    
-    .heart {
-      position: absolute;
-      width: 140px;
-      height: 126px;
-      animation: heartbeat 1.2s infinite ease-in-out;
-      filter: drop-shadow(0 0 25px rgba(255, 107, 157, 0.9));
-      z-index: 2;
-      transform-origin: center;
-      transition: all 0.3s;
-    }
-    
-    .heart:hover {
-      transform: scale(1.1);
-    }
-    
-    /* 使用SVG方式创建爱心，兼容性更好 */
-    .heart svg {
-      width: 100%;
-      height: 100%;
-      fill: #ff6b9d;
-      filter: drop-shadow(0 0 15px rgba(255, 107, 157, 0.8));
-    }
-    
-    @keyframes heartbeat {
-      0% {
-        transform: scale(1);
-      }
-      5% {
-        transform: scale(1.1);
-      }
-      10% {
-        transform: scale(1.15);
-      }
-      15% {
-        transform: scale(1.2);
-      }
-      50% {
-        transform: scale(1);
-      }
-      100% {
-        transform: scale(1);
-      }
-    }
-    
-    .heart-pulse {
-      position: absolute;
-      width: 180px;
-      height: 180px;
-      border-radius: 50%;
-      background: rgba(255, 107, 157, 0.3);
-      animation: pulse 1.2s infinite;
-      z-index: 1;
-      transform-origin: center;
-    }
-    
-    @keyframes pulse {
-      0% {
-        transform: scale(0.8);
-        opacity: 0.7;
-      }
-      50% {
-        transform: scale(1.2);
-        opacity: 0.3;
-      }
-      100% {
-        transform: scale(1.4);
-        opacity: 0;
-      }
-    }
-
-    /* 打卡便签按钮 */
-    .note-button {
-      position: fixed;
-      bottom: 30px;
-      right: 30px;
-      padding: 12px 24px;
-      background: rgba(255, 107, 157, 0.8);
-      color: white;
-      border: none;
-      border-radius: 50px;
-      font-size: 1.2em;
-      font-weight: bold;
-      cursor: pointer;
-      z-index: 10;
-      box-shadow: 0 0 20px rgba(255, 107, 157, 0.5);
-      transition: all 0.3s;
-      pointer-events: auto;
-    }
-    
-    .note-button:hover {
-      background: rgba(255, 107, 157, 1);
-      transform: scale(1.05);
-      box-shadow: 0 0 30px rgba(255, 107, 157, 0.7);
-    }
-
-    /* 便签弹窗 */
-    .note-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.7);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s;
-    }
-    
-    .note-modal.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    
-    .note-content {
-      background: rgba(30, 0, 50, 0.95);
-      border-radius: 20px;
-      padding: 30px;
-      width: 90%;
-      max-width: 600px;
-      max-height: 80vh;
-      overflow-y: auto;
-      box-shadow: 0 0 50px rgba(255, 107, 157, 0.5);
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(10px);
-    }
-    
-    .note-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-      padding-bottom: 10px;
-    }
-    
-    .note-title {
-      font-size: 1.8em;
-      color: var(--color-pink);
-      margin: 0;
-    }
-    
-    .close-button {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 1.5em;
-      cursor: pointer;
-      padding: 5px;
-    }
-    
-    .week-navigation {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-    
-    .nav-button {
-      background: rgba(255, 107, 157, 0.6);
-      border: none;
-      color: white;
-      padding: 8px 16px;
-      border-radius: 20px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    
-    .nav-button:hover {
-      background: rgba(255, 107, 157, 0.9);
-    }
-    
-    .nav-button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    
-    .week-title {
-      font-size: 1.2em;
-      color: var(--color-cyan);
-    }
-    
-    .note-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    
-    .note-item {
-      padding: 15px;
-      margin-bottom: 10px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      border-left: 4px solid var(--color-pink);
-    }
-    
-    .note-date {
-      font-weight: bold;
-      color: var(--color-cyan);
-      margin-bottom: 5px;
-    }
-    
-    .note-text {
-      color: white;
-    }
-
-    /* 全屏特效 */
-    .fullscreen-effect {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      pointer-events: none;
-      z-index: 100;
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-    
-    .fullscreen-effect.active {
-      opacity: 1;
-    }
-    
-    .fullscreen-effect .effect-bg {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: radial-gradient(circle, rgba(255, 107, 157, 0.7) 0%, rgba(106, 13, 173, 0.8) 100%);
-      animation: effectBgPulse 3s ease-out forwards;
-    }
-    
-    @keyframes effectBgPulse {
-      0% {
-        transform: scale(0);
-        opacity: 0;
-      }
-      20% {
-        transform: scale(1);
-        opacity: 1;
-      }
-      80% {
-        transform: scale(1);
-        opacity: 1;
-      }
-      100% {
-        transform: scale(1.2);
-        opacity: 0;
-      }
-    }
-    
-    .fullscreen-effect .effect-text {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 2em;              /* 默认字体缩小一点 */
-  max-width: 90%;              /* 限制宽度，避免超出屏幕 */
-  color: white;
-  text-shadow: 0 0 40px rgba(255, 255, 255, 0.9);
-  animation: effectTextPulse 3s ease-out forwards;
-  z-index: 101;
-  text-align: center;
-  font-weight: bold;
-  white-space: normal;         /* 允许自动换行 */
-  word-break: break-word;      /* 长词也能断开 */
-  line-height: 1.4;
-}
-    
-    @keyframes effectTextPulse {
-      0% {
-        transform: translate(-50%, -50%) scale(0);
-        opacity: 0;
-      }
-      30% {
-        transform: translate(-50%, -50%) scale(1.2);
-        opacity: 1;
-      }
-      50% {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 1;
-      }
-      70% {
-        transform: translate(-50%, -50%) scale(1.1);
-        opacity: 1;
-      }
-      100% {
-        transform: translate(-50%, -50%) scale(1.2);
-        opacity: 0;
-      }
-    }
-
-    /* 响应式设计 - 优化移动端显示 */
-    @media (max-width: 768px) {
-      .main-content {
-        width: 95%;
-      }
-      
-      .love-saying {
-        font-size: 3em;
-      }
-      
-      .love-time {
-        padding: 1em 0.5em;
-      }
-      
-      .days-value { font-size: 2.8em; }
-      .hours-value { font-size: 2.4em; }
-      .minutes-value { font-size: 2em; }
-      .seconds-value { font-size: 1.6em; }
-      .milliseconds-value { font-size: 1.2em; }
-      
-      /* 移动端爱心尺寸调整 */
-      .heart {
-        width: 120px;
-        height: 108px;
-      }
-      
-      .heart-pulse {
-        width: 150px;
-        height: 150px;
-      }
-      
-      .fullscreen-effect .effect-text {
-        font-size: 3em;
-      }
-      
-      .note-button {
-        bottom: 20px;
-        right: 20px;
-        font-size: 1.1em;
-        padding: 10px 20px;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .love-saying {
-        font-size: 2em;
-      }
-      
-      .days-value { font-size: 2.2em; }
-      .hours-value { font-size: 1.9em; }
-      .minutes-value { font-size: 1.6em; }
-      .seconds-value { font-size: 1.3em; }
-      .milliseconds-value { font-size: 1em; }
-      
-      .time-label {
-        font-size: 1em;
-      }
-      
-      /* 小屏幕爱心尺寸调整 */
-      .heart {
-        width: 100px;
-        height: 90px;
-      }
-      
-      .heart-pulse {
-        width: 130px;
-        height: 130px;
-      }
-      
-      .fullscreen-effect .effect-text {
-        font-size: 2em;
-      }
-      
-      .note-button {
-        bottom: 10px;
-        right: 10px;
-        font-size: 0.9em;
-        padding: 6px 12px;
-      }
-      
-      .note-content {
-        padding: 20px;
-      }
-    }
-
-    @media (max-width: 360px) {
-      /* 超小屏幕进一步调整 */
-      .fullscreen-effect .effect-text {
-    font-size: 1.2em;   /* 小屏幕再缩小 */
-    max-width: 95%;
+  :root {
+    --color-main: #4A0A8A;
+    --color-main-grad: #6A0DAD;
+    --color-deep-purple: #2D0047;
+    --color-dark-blue: #0A0028;
+    --color-cyan: #00ffff;
+    --color-white: #ffffff;
+    --color-pink: #ff6b9d;
+    --color-shadow1: #00ffff;
+    --color-shadow2: #6a0dad;
   }
-}
-      .heart {
-        width: 80px;
-        height: 72px;
-      }
-      
-      .heart-pulse {
-        width: 110px;
-        height: 110px;
-      }
-      
-      .love-saying {
-        font-size: 1.8em;
-      }
-    /* 隐藏滚动条 */
-    ::-webkit-scrollbar {
-      display: none;
-    }
-  </style>
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    min-height: 100vh;
+    min-width: 100vw;
+    width: 100vw;
+    height: auto;
+    overflow-y: auto;
+    background: linear-gradient(135deg, var(--color-dark-blue) 0%, var(--color-deep-purple) 40%, var(--color-main) 80%, var(--color-main-grad) 100%);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "STKaiti", "Segoe UI", Arial, cursive, sans-serif;
+    color: var(--color-white);
+  }
+
+  body { position: relative; overflow-y: auto; overscroll-behavior: none; }
+
+  /* 通用按钮样式 */
+  .floating-button {
+    position: fixed;
+    padding: 12px 24px;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s;
+  }
+
+  .note-button { right: 30px; bottom: 30px; background: rgba(255,107,157,0.8); box-shadow: 0 0 20px rgba(255,107,157,0.5); }
+  .note-button:hover { background: rgba(255,107,157,1); transform: scale(1.05); box-shadow: 0 0 30px rgba(255,107,157,0.7); }
+
+  .diary-button { left: 30px; bottom: 30px; background: rgba(0,255,255,0.8); box-shadow: 0 0 20px rgba(0,255,255,0.5); }
+  .diary-button:hover { background: rgba(0,255,255,1); transform: scale(1.05); box-shadow: 0 0 30px rgba(0,255,255,0.7); }
+
+  /* 背景元素 */
+  #bgCanvas, #particleCanvas {
+    position: fixed; left: 0; top: 0; z-index: 0;
+    width: 100vw !important; height: 100vh !important; display: block;
+  }
+
+  .stars-background {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+    background:
+      radial-gradient(2px 2px at 20px 30px, #eee, transparent),
+      radial-gradient(2px 2px at 40px 70px, #fff, transparent),
+      radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+      radial-gradient(1px 1px at 130px 80px, #fff, transparent),
+      radial-gradient(2px 2px at 160px 30px, #ddd, transparent);
+    background-repeat: repeat; background-size: 200px 100px; opacity: 0.3;
+    animation: twinkle 4s infinite alternate;
+  }
+  @keyframes twinkle { 0%,100% { opacity: 0.2; } 50% { opacity: 0.4; } }
+
+  .main-content {
+    position: relative; margin: 20px auto; width: 90%; max-width: 800px; text-align: center;
+  }
+
+  .love-saying {
+    font-size: 4.5em; font-weight: bold; color: var(--color-pink); letter-spacing: .16em;
+    padding-bottom: .15em; text-shadow: 0 0 30px var(--color-shadow1), 0 0 25px var(--color-shadow2), 2px 3px 2px #0005;
+    animation: romancePulse 2.8s infinite cubic-bezier(.77,0,.17,1);
+    background: linear-gradient(90deg, var(--color-pink) 10%, var(--color-cyan) 90%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 1em; cursor: pointer; transition: all 0.3s;
+  }
+  .love-saying:hover { transform: scale(1.05); }
+  @keyframes romancePulse { 0% { transform:translateY(0) scale(1);} 45%{ transform:translateY(-12px) scale(1.12);} 100%{transform:translateY(0) scale(1);} }
+
+  /* 倒计时样式 */
+  .love-time {
+    padding: 1.5em 0.8em; border-radius: 20px; background: rgba(255,255,255,0.08);
+    box-shadow: 0 0 40px 6px rgba(0,255,255,0.25) inset, 0 0 60px 4px rgba(255,107,157,0.3);
+    mix-blend-mode: normal; transition: all .3s; animation: floatText 4.8s ease-in-out infinite alternate;
+    display: block; position: relative; overflow: hidden;
+    -webkit-backdrop-filter: blur(15px); backdrop-filter: blur(15px);
+    background-color: rgba(255,255,255,0.02);
+    border: 3px solid rgba(255,255,255,0.2); width: 100%; box-sizing: border-box; margin-bottom: 2em; pointer-events: none;
+  }
+
+  .time-line { display:flex; justify-content:center; align-items:center; margin:0.5em 0; line-height:1.2; }
+  .time-line.spacing-small { height: 0.5em; }
+
+  .time-label { font-size:1.2em; font-weight:600; color:var(--color-white); text-shadow:0 0 10px var(--color-cyan); margin-right:0.5em; }
+  .love-time .time-line:first-child .time-label { font-size:2em; color:var(--color-pink); text-shadow:0 0 15px var(--color-pink); margin-right:0; }
+
+  .time-value { font-weight:800; color:var(--color-cyan); text-shadow:0 0 15px var(--color-cyan); }
+  .days-value { font-size:4.5em; } .hours-value { font-size:3em; } .minutes-value { font-size:3em; } .seconds-value { font-size:2em; } .milliseconds-value { font-size:1.5em; }
+
+  @keyframes floatText { 0%{transform:translateY(0);} 40%{transform:translateY(-6px);} 100%{transform:translateY(0);} }
+
+  /* 大爱心 */
+  .heart-container { position:relative; width:100%; height:180px; display:flex; justify-content:center; align-items:center; margin-top:0.5em; cursor:pointer; }
+  .heart { position:absolute; width:140px; height:126px; animation:heartbeat 1.2s infinite ease-in-out; filter: drop-shadow(0 0 25px rgba(255,107,157,0.9)); z-index:2; transform-origin:center; transition:all 0.3s; }
+  .heart:hover { transform: scale(1.1); }
+  .heart svg { width:100%; height:100%; fill:#ff6b9d; filter: drop-shadow(0 0 15px rgba(255,107,157,0.8)); }
+  @keyframes heartbeat { 0%{transform:scale(1);}5%{transform:scale(1.1);}10%{transform:scale(1.15);}15%{transform:scale(1.2);}50%{transform:scale(1);}100%{transform:scale(1);} }
+  .heart-pulse { position:absolute; width:180px; height:180px; border-radius:50%; background:rgba(255,107,157,0.3); animation:pulse 1.2s infinite; z-index:1; transform-origin:center; }
+  @keyframes pulse { 0%{transform:scale(0.8);opacity:0.7;}50%{transform:scale(1.2);opacity:0.3;}100%{transform:scale(1.4);opacity:0;} }
+
+  /* 弹窗、便签、日记样式 */
+  .diary-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:1000; opacity:0; pointer-events:none; transition:opacity 0.3s; }
+  .diary-modal.active { opacity:1; pointer-events:auto; }
+  .diary-content {
+    background: rgba(30,0,50,0.95); border-radius:20px; padding:30px; width:90%; max-width:600px; max-height:80vh; overflow-y:auto;
+    box-shadow:0 0 50px rgba(0,255,255,0.5); border:2px solid rgba(255,255,255,0.2);
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); background-color: rgba(30,0,50,0.95);
+  }
+  .diary-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:10px; }
+  .diary-title { font-size:1.8em; color:var(--color-cyan); margin:0; }
+  .diary-close { background:none; border:none; color:white; font-size:1.5em; cursor:pointer; }
+
+  .diary-week-navigation, .diary-day-navigation { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+  .diary-nav-button { background:rgba(0,255,255,0.6); border:none; color:white; padding:8px 16px; border-radius:20px; cursor:pointer; transition:all 0.3s; }
+  .diary-nav-button:hover { background:rgba(0,255,255,0.9); }
+  .diary-nav-button:disabled { opacity:0.5; cursor:not-allowed; }
+  .diary-week-title, .diary-day-title { font-size:1.2em; color:var(--color-cyan); }
+
+  .diary-heart-line { margin:8px 0 12px; color:var(--color-pink); font-weight:700; }
+  .diary-text { color:white; white-space:pre-wrap; line-height:1.6; }
+
+  .note-modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:1000; opacity:0; pointer-events:none; transition:opacity 0.3s; }
+  .note-modal.active { opacity:1; pointer-events:auto; }
+  .note-content {
+    background: rgba(30,0,50,0.95); border-radius:20px; padding:30px; width:90%; max-width:600px; max-height:80vh; overflow-y:auto;
+    box-shadow:0 0 50px rgba(255,107,157,0.5); border:2px solid rgba(255,255,255,0.2);
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); background-color: rgba(30,0,50,0.95);
+  }
+  .note-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:10px; }
+  .note-title { font-size:1.8em; color:var(--color-pink); margin:0; }
+  .close-button { background:none; border:none; color:white; font-size:1.5em; cursor:pointer; padding:5px; }
+
+  .week-navigation { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+  .nav-button { background:rgba(255,107,157,0.6); border:none; color:white; padding:8px 16px; border-radius:20px; cursor:pointer; transition:all 0.3s; }
+  .nav-button:hover { background:rgba(255,107,157,0.9); }
+  .nav-button:disabled { opacity:0.5; cursor:not-allowed; }
+  .week-title { font-size:1.2em; color:var(--color-cyan); }
+  .note-list { list-style:none; padding:0; margin:0; }
+  .note-item { padding:15px; margin-bottom:10px; background:rgba(255,255,255,0.1); border-radius:10px; border-left:4px solid var(--color-pink); }
+  .note-date { font-weight:bold; color:var(--color-cyan); margin-bottom:5px; }
+  .note-text { color:white; }
+
+  .fullscreen-effect { position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:100; opacity:0; transition:opacity 0.3s; }
+  .fullscreen-effect.active { opacity:1; }
+  .fullscreen-effect .effect-bg { position:absolute; top:0; left:0; width:100%; height:100%; background: radial-gradient(circle, rgba(255,107,157,0.7) 0%, rgba(106,13,173,0.8) 100%); animation:effectBgPulse 3s ease-out forwards; }
+  @keyframes effectBgPulse { 0%{transform:scale(0);opacity:0;}20%{transform:scale(1);opacity:1;}80%{transform:scale(1);opacity:1;}100%{transform:scale(1.2);opacity:0;} }
+  .fullscreen-effect .effect-text { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:2em; max-width:90%; color:white; text-shadow:0 0 40px rgba(255,255,255,0.9); animation:effectTextPulse 3s ease-out forwards; z-index:101; text-align:center; font-weight:bold; white-space:normal; word-break:break-word; line-height:1.4; }
+  @keyframes effectTextPulse { 0%{transform:translate(-50%,-50%) scale(0);opacity:0;}30%{transform:translate(-50%,-50%) scale(1.2);opacity:1;}50%{transform:translate(-50%,-50%) scale(1);opacity:1;}70%{transform:translate(-50%,-50%) scale(1.1);opacity:1;}100%{transform:translate(-50%,-50%) scale(1.2);opacity:0;} }
+
+  /* SVG title class */
+  .title-svg { width:100%; height:64px; overflow:visible; display:block; }
+
+  /* small spacing helper (替换内联 style) */
+  .spacing-small { height:0.5em; }
+
+  /* 响应式简化 */
+  @media (max-width: 768px) {
+    .main-content { width:95%; }
+    .love-saying { font-size:3em; }
+    .love-time { padding:1em 0.5em; }
+    .days-value { font-size:2.8em; } .hours-value { font-size:2.4em; } .minutes-value { font-size:2em; } .seconds-value { font-size:1.6em; } .milliseconds-value { font-size:1.2em; }
+    .heart { width:120px; height:108px; } .heart-pulse { width:150px; height:150px; }
+    .fullscreen-effect .effect-text { font-size:3em; }
+    .floating-button { font-size:1.1em; padding:10px 20px; bottom:20px; }
+  }
+  @media (max-width: 480px) {
+    .love-saying { font-size:2em; }
+    .days-value { font-size:2.2em; } .hours-value { font-size:1.9em; } .minutes-value { font-size:1.6em; } .seconds-value { font-size:1.3em; } .milliseconds-value { font-size:1em; }
+    .time-label { font-size:1em; }
+    .heart { width:100px; height:90px; } .heart-pulse { width:130px; height:130px; }
+    .fullscreen-effect .effect-text { font-size:2em; }
+    .floating-button { font-size:0.9em; padding:6px 12px; bottom:10px; }
+    .note-content { padding:20px; }
+  }
+  @media (max-width: 360px) {
+    .fullscreen-effect .effect-text { font-size:1.2em; max-width:95%; }
+    .heart { width:80px; height:72px; } .heart-pulse { width:110px; height:110px; } .love-saying { font-size:1.8em; }
+    .floating-button { font-size:0.8em; padding:5px 10px; bottom:8px; }
+  }
+
+  /* 隐藏滚动条 */
+  ::-webkit-scrollbar { display: none; }
+</style>
 </head>
 <body>
-<!-- 深邃星空背景 -->
-<div class="stars-background"></div>
-<!-- 背景Canvas -->
-<canvas id="bgCanvas"></canvas>
-<canvas id="particleCanvas"></canvas>
-<!-- 全屏特效 -->
-<div class="fullscreen-effect" id="fullscreenEffect">
-<div class="effect-bg"></div>
-<div class="effect-text" id="effectText">💖</div>
-</div>
-<!-- 打卡便签弹窗 -->
-<div class="note-modal" id="noteModal">
-<div class="note-content">
-<div class="note-header">
-<h2 class="note-title">想你的每一天 💌</h2>
-<button class="close-button" id="closeNote">✕</button>
-</div>
-<div class="week-navigation">
-<button class="nav-button" id="prevWeek">上一周</button>
-<div class="week-title" id="weekTitle">第1周</div>
-<button class="nav-button" id="nextWeek">下一周</button>
-</div>
-<ul class="note-list" id="noteList">
-<!-- 便签内容将通过JavaScript动态生成 -->
-</ul>
-</div>
-</div>
-<!-- 主要内容区域 -->
-<div class="main-content">
-<!-- 可点击的标题 -->
-<div class="love-saying" id="loveSaying">
-  <svg
-    viewBox="0 0 360 64"
-    xmlns="http://www.w3.org/2000/svg"
-    preserveAspectRatio="xMidYMid meet"
-    style="width: 100%; height: 64px; overflow: visible; display: block;"
-  >
-    <defs>
-      <linearGradient id="titleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="10%" stop-color="#ff6b9d"/>
-        <stop offset="90%" stop-color="#00ffff"/>
-      </linearGradient>
-    </defs>
-    <text
-      x="50%" y="50%"
-      dominant-baseline="middle" text-anchor="middle"
-      font-size="28" font-weight="700"
-      font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'STKaiti', 'Segoe UI', Arial, sans-serif"
-      fill="url(#titleGradient)"
-    >
-      TaiTugou在想老婆
-    </text>
-  </svg>
-</div>
-<div class="love-time" id="loveTime">
-<div class="time-line">
-<span class="time-label">想你了</span>
-</div>
-<div class="time-line" style="height: 0.5em;"></div> <!-- 间隔行 -->
-<div class="time-line">
-<span class="time-value days-value" id="days">0</span>
-<span class="time-label">天</span>
-</div>
-<div class="time-line">
-<span class="time-value hours-value" id="hours">00</span>
-<span class="time-label">小时</span>
-</div>
-<div class="time-line">
-<span class="time-value minutes-value" id="minutes">00</span>
-<span class="time-label">分钟</span>
-</div>
-<div class="time-line">
-<span class="time-value seconds-value" id="seconds">00</span>
-<span class="time-label">秒</span>
-</div>
-<div class="time-line">
-<span class="time-value milliseconds-value" id="milliseconds">000</span>
-<span class="time-label">毫秒</span>
-</div>
-</div>
-<!-- 可点击的爱心 -->
-<div class="heart-container" id="heartContainer">
-<div class="heart-pulse"></div>
-<div class="heart">
-<!-- 使用SVG爱心，兼容性更好 -->
-<svg viewbox="0 0 32 29.6">
-<path d="M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2
-          c6.1-9.3,16-12.1,16-21.2C32,3.8,28.2,0,23.6,0z"></path>
-</svg>
-</div>
-</div>
-</div>
-<!-- 打卡便签按钮 -->
-<button class="note-button" id="noteButton">打卡便签 💝</button>
+  <div class="stars-background"></div>
+  <canvas id="bgCanvas"></canvas>
+  <canvas id="particleCanvas"></canvas>
+
+  <div class="fullscreen-effect" id="fullscreenEffect">
+    <div class="effect-bg"></div>
+    <div class="effect-text" id="effectText">💖</div>
+  </div>
+
+  <div class="note-modal" id="noteModal">
+    <div class="note-content">
+      <div class="note-header">
+        <h2 class="note-title">想你的每一天 💌</h2>
+        <button type="button" class="close-button" id="closeNote">✕</button>
+      </div>
+
+      <div class="week-navigation">
+        <button type="button" class="nav-button" id="prevWeek">上一周</button>
+        <div class="week-title" id="weekTitle">第1周</div>
+        <button type="button" class="nav-button" id="nextWeek">下一周</button>
+      </div>
+
+      <ul class="note-list" id="noteList"></ul>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="love-saying" id="loveSaying">
+      <svg class="title-svg" viewBox="0 0 360 64" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <linearGradient id="titleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="10%" stop-color="#ff6b9d"/>
+            <stop offset="90%" stop-color="#00ffff"/>
+          </linearGradient>
+        </defs>
+        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="28" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'STKaiti', 'Segoe UI', Arial, sans-serif" fill="url(#titleGradient)">
+          TaiTugou在想老婆
+        </text>
+      </svg>
+    </div>
+
+    <div class="love-time" id="loveTime">
+      <div class="time-line">
+        <span class="time-label">想你了</span>
+      </div>
+      <div class="time-line spacing-small"></div>
+      <div class="time-line">
+        <span class="time-value days-value" id="days">0</span>
+        <span class="time-label">天</span>
+      </div>
+      <div class="time-line">
+        <span class="time-value hours-value" id="hours">00</span>
+        <span class="time-label">小时</span>
+      </div>
+      <div class="time-line">
+        <span class="time-value minutes-value" id="minutes">00</span>
+        <span class="time-label">分钟</span>
+      </div>
+      <div class="time-line">
+        <span class="time-value seconds-value" id="seconds">00</span>
+        <span class="time-label">秒</span>
+      </div>
+      <div class="time-line">
+        <span class="time-value milliseconds-value" id="milliseconds">000</span>
+        <span class="time-label">毫秒</span>
+      </div>
+    </div>
+
+    <div class="heart-container" id="heartContainer">
+      <div class="heart-pulse"></div>
+      <div class="heart">
+        <svg viewBox="0 0 32 29.6">
+          <path d="M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2c6.1-9.3,16-12.1,16-21.2C32,3.8,28.2,0,23.6,0z"></path>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" class="note-button floating-button" id="noteButton">打卡便签 💝</button>
+  <button type="button" class="diary-button floating-button" id="diaryButton">日记便签 📘</button>
+
+  <div class="diary-modal" id="diaryModal">
+    <div class="diary-content">
+      <div class="diary-header">
+        <h2 class="diary-title">每周日记</h2>
+        <button type="button" class="diary-close" id="diaryClose">✕</button>
+      </div>
+
+      <div class="diary-week-navigation">
+        <button type="button" class="diary-nav-button" id="diaryPrevWeek">上一周</button>
+        <div class="diary-week-title" id="diaryWeekTitle">第1周</div>
+        <button type="button" class="diary-nav-button" id="diaryNextWeek">下一周</button>
+      </div>
+
+      <div class="diary-day-navigation">
+        <button type="button" class="diary-nav-button" id="diaryPrevDay">上一天</button>
+        <div class="diary-day-title" id="diaryDayTitle">星期日</div>
+        <button type="button" class="diary-nav-button" id="diaryNextDay">下一天</button>
+      </div>
+
+      <div class="diary-heart-line" id="diaryHearts">想老婆指数：</div>
+      <div class="diary-text" id="diaryText">暂无日记</div>
+    </div>
+  </div>
+
 <script>
-    // 配置参数
-    const CONFIG = {
-      startDate: "2025-10-18T13:28:07",
-    };
+  // 配置参数
+  const CONFIG = { startDate: "2025-10-18T13:28:07" };
 
-    // 每天不同的特殊消息 - 您可以在这里修改
-    const dailyMessages = [
-      "周一：没想到每天不一样吧，新的一周开始了，更加想你了💕",
-      "周二：距离周末又近了一天，期待见到你✨",
-      "周三：一周过半，思念却越来越浓🌹",
-      "周四：快要见到你了，心情开始激动🌟",
-      "周五：明天中午就能相见了，无比期待💖",
-      "周六：终于等到这一天🎉",
-      "周日：珍惜和你在一起的每一分每一秒💝"
-    ];
+  const dailyMessages = [
+    "周一：没想到每天不一样吧，新的一周开始了，更加想你了💕",
+    "周二：距离周末又近了一天，期待见到你✨",
+    "周三：一周过半，思念却越来越浓🌹",
+    "周四：快要见到你了，心情开始激动🌟",
+    "周五：明天中午就能相见了，无比期待💖",
+    "周六：终于等到这一天🎉",
+    "周日：珍惜和你在一起的每一分每一秒💝"
+  ];
 
-    // 状态管理
-    const state = {
-      currentWeek: 0,
-      notes: JSON.parse(localStorage.getItem('loveNotes')) || [],
-      effectTimeout: null
-    };
+  // 应用状态
+  const state = {
+    currentWeek: 1,
+    currentDay: 0,
+    diaryEntries: [], // 备用（若需）
+    effectTimeout: null,
+    notes: JSON.parse(localStorage.getItem('loveNotes')) || []
+  };
 
-    // DOM 元素
-    const elements = {
-      bgCanvas: document.getElementById('bgCanvas'),
-      particleCanvas: document.getElementById('particleCanvas'),
-      fullscreenEffect: document.getElementById('fullscreenEffect'),
-      effectText: document.getElementById('effectText'),
-      loveSaying: document.getElementById('loveSaying'),
-      days: document.getElementById('days'),
-      hours: document.getElementById('hours'),
-      minutes: document.getElementById('minutes'),
-      seconds: document.getElementById('seconds'),
-      milliseconds: document.getElementById('milliseconds'),
-      heartContainer: document.getElementById('heartContainer'),
-      noteButton: document.getElementById('noteButton'),
-      noteModal: document.getElementById('noteModal'),
-      closeNote: document.getElementById('closeNote'),
-      noteList: document.getElementById('noteList'),
-      prevWeek: document.getElementById('prevWeek'),
-      nextWeek: document.getElementById('nextWeek'),
-      weekTitle: document.getElementById('weekTitle')
-    };
+  // DOM 元素
+  const elements = {
+    bgCanvas: document.getElementById('bgCanvas'),
+    particleCanvas: document.getElementById('particleCanvas'),
+    fullscreenEffect: document.getElementById('fullscreenEffect'),
+    effectText: document.getElementById('effectText'),
+    loveSaying: document.getElementById('loveSaying'),
+    days: document.getElementById('days'),
+    hours: document.getElementById('hours'),
+    minutes: document.getElementById('minutes'),
+    seconds: document.getElementById('seconds'),
+    milliseconds: document.getElementById('milliseconds'),
+    heartContainer: document.getElementById('heartContainer'),
+    noteButton: document.getElementById('noteButton'),
+    noteModal: document.getElementById('noteModal'),
+    closeNote: document.getElementById('closeNote'),
+    noteList: document.getElementById('noteList'),
+    prevWeek: document.getElementById('prevWeek'),
+    nextWeek: document.getElementById('nextWeek'),
+    weekTitle: document.getElementById('weekTitle'),
+    diaryButton: document.getElementById('diaryButton'),
+    diaryModal: document.getElementById('diaryModal'),
+    diaryClose: document.getElementById('diaryClose'),
+    diaryPrevWeek: document.getElementById('diaryPrevWeek'),
+    diaryNextWeek: document.getElementById('diaryNextWeek'),
+    diaryWeekTitle: document.getElementById('diaryWeekTitle'),
+    diaryPrevDay: document.getElementById('diaryPrevDay'),
+    diaryNextDay: document.getElementById('diaryNextDay'),
+    diaryDayTitle: document.getElementById('diaryDayTitle'),
+    diaryHearts: document.getElementById('diaryHearts'),
+    diaryText: document.getElementById('diaryText')
+  };
 
-    // 初始化
-    function init() {
-      setupBackground();
-      setupParticles();
-      setupEventListeners();
-      startTimer();
-      generateAllNotes();
-      state.currentWeek = Math.ceil(state.notes.length / 7) - 1;
-    }
-
-    // 设置背景
-    function setupBackground() {
-      const bgCtx = elements.bgCanvas.getContext('2d');
-      
-      function resizeBgCanvas() {
-        elements.bgCanvas.width = window.innerWidth;
-        elements.bgCanvas.height = window.innerHeight;
-      }
-      
-      resizeBgCanvas();
-      window.addEventListener('resize', resizeBgCanvas);
-
-      function drawBackground() {
-        const w = elements.bgCanvas.width, h = elements.bgCanvas.height;
-        
-        // 深邃背景渐变
-        const gradient = bgCtx.createLinearGradient(0, 0, w, h);
-        gradient.addColorStop(0, "#0A0028");
-        gradient.addColorStop(0.3, "#2D0047");
-        gradient.addColorStop(0.7, "#4A0A8A");
-        gradient.addColorStop(1, "#6A0DAD");
-        
-        bgCtx.fillStyle = gradient;
-        bgCtx.fillRect(0, 0, w, h);
-        
-        requestAnimationFrame(drawBackground);
-      }
-      
-      drawBackground();
-    }
-
-    // 设置粒子系统
-    function setupParticles() {
-      const pCtx = elements.particleCanvas.getContext('2d');
-      let dpr = window.devicePixelRatio || 1;
-      
-      function resizeParticleCanvas() {
-        const w = window.innerWidth, h = window.innerHeight;
-        elements.particleCanvas.width = w * dpr;
-        elements.particleCanvas.height = h * dpr;
-        elements.particleCanvas.style.width = w + 'px';
-        elements.particleCanvas.style.height = h + 'px';
-        pCtx.setTransform(1, 0, 0, 1, 0, 0);
-        pCtx.scale(dpr, dpr);
-      }
-      
-      resizeParticleCanvas();
-      window.addEventListener('resize', resizeParticleCanvas);
-      
-      function drawParticles() {
-        pCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-        
-        // 绘制一个大的爱心轮廓
-        const centerX = window.innerWidth / 2;
-        const centerY = window.innerHeight / 2 - 45;
-        const size = Math.min(window.innerWidth, window.innerHeight) * 0.03;
-        
-        pCtx.beginPath();
-        for(let t = 0; t <= 2 * Math.PI; t += 0.01) {
-          const x = 16 * Math.pow(Math.sin(t), 3);
-          const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
-          pCtx.lineTo(centerX + x * size, centerY + y * size);
-        }
-        pCtx.closePath();
-        pCtx.strokeStyle = 'rgba(255, 107, 157, 0.3)';
-        pCtx.lineWidth = 2;
-        pCtx.stroke();
-        
-        requestAnimationFrame(drawParticles);
-      }
-      
-      drawParticles();
-    }
-
-    // 设置事件监听
-    function setupEventListeners() {
-      // 点击爱心显示全屏特效
-      elements.heartContainer.addEventListener('click', showHeartEffect);
-      elements.heartContainer.addEventListener('touchstart', showHeartEffect, { passive: true });
-      
-      // 点击标题显示每日消息
-      elements.loveSaying.addEventListener('click', showDailyMessage);
-      elements.loveSaying.addEventListener('touchstart', showDailyMessage, { passive: true });
-      
-      // 便签功能
-      elements.noteButton.addEventListener('click', openNoteModal);
-      elements.closeNote.addEventListener('click', closeNoteModal);
-      elements.prevWeek.addEventListener('click', showPrevWeek);
-      elements.nextWeek.addEventListener('click', showNextWeek);
-      
-      // 点击弹窗外部关闭
-      elements.noteModal.addEventListener('click', (e) => {
-        if (e.target === elements.noteModal) {
-          closeNoteModal();
-        }
-      });
-    }
-
-    // 显示爱心特效
-    let heartClickCount = 0; // 记录点击次数
-
-function showHeartEffect() {
-  heartClickCount++;
-
-  const base = document.getElementById('fullscreenEffect');
-  if (!base) return;
-  const clone = base.cloneNode(true);
-  clone.id = '';
-  clone.classList.add('active');
-
-  const textEl = clone.querySelector('.effect-text');
-  if (heartClickCount >= 10) {
-    if (textEl) textEl.textContent = '老婆，等我回家😭';
-    heartClickCount = 0; // 重置计数
-  } else {
-    if (textEl) textEl.textContent = '💖';
+  // 初始化：背景、粒子、事件、数据、计时器
+  function init() {
+    setupBackground();
+    setupParticles();
+    setupEventListeners();
+    // 便签数据
+    generateAllNotes();
+    state.currentWeek = Math.max(0, Math.ceil(state.notes.length / 7) - 1);
+    updateWeekDisplay();
+    startTimer();
   }
 
-  document.body.appendChild(clone);
-  setTimeout(() => {
-    try { clone.remove(); } catch (e) {}
-  }, 2200);
-}
+  // 背景绘制
+  function setupBackground() {
+    const bgCtx = elements.bgCanvas.getContext('2d');
+    function resizeBgCanvas() {
+      elements.bgCanvas.width = window.innerWidth;
+      elements.bgCanvas.height = window.innerHeight;
+    }
+    resizeBgCanvas();
+    window.addEventListener('resize', resizeBgCanvas);
+    function drawBackground() {
+      const w = elements.bgCanvas.width, h = elements.bgCanvas.height;
+      const gradient = bgCtx.createLinearGradient(0,0,w,h);
+      gradient.addColorStop(0,"#0A0028"); gradient.addColorStop(0.3,"#2D0047"); gradient.addColorStop(0.7,"#4A0A8A"); gradient.addColorStop(1,"#6A0DAD");
+      bgCtx.fillStyle = gradient; bgCtx.fillRect(0,0,w,h);
+      requestAnimationFrame(drawBackground);
+    }
+    drawBackground();
+  }
 
-
-
-    // 显示每天不同的消息
-    function showDailyMessage() {
-  const today = new Date();
-  const dayOfWeek = today.getDay();
-  const messageIndex = dayOfWeek === 0 ? dailyMessages.length - 1 : dayOfWeek - 1;
-  const dailyMessage = dailyMessages[messageIndex] || '';
-  const base = document.getElementById('fullscreenEffect');
-  if (!base) return;
-  const clone = base.cloneNode(true);
-  clone.id = '';
-  clone.classList.add('active');
-  const textEl = clone.querySelector('.effect-text');
-  if (textEl) textEl.textContent = dailyMessage;
-  document.body.appendChild(clone);
-  setTimeout(() => {
-    try { clone.remove(); } catch (e) {}
-  }, 4200);
-}
-
-
-    // 启动计时器
-    function startTimer() {
-      const startTime = new Date(CONFIG.startDate).getTime();
-      
-      function updateTimer() {
-        const now = Date.now();
-        const diff = now - startTime;
-        
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-        const milliseconds = diff % 1000;
-        
-        elements.days.textContent = days;
-        elements.hours.textContent = hours.toString().padStart(2, '0');
-        elements.minutes.textContent = minutes.toString().padStart(2, '0');
-        elements.seconds.textContent = seconds.toString().padStart(2, '0');
-        elements.milliseconds.textContent = milliseconds.toString().padStart(3, '0');
-        
-        requestAnimationFrame(updateTimer);
+  // 粒子（爱心轮廓）
+  function setupParticles() {
+    const pCtx = elements.particleCanvas.getContext('2d');
+    let dpr = window.devicePixelRatio || 1;
+    function resizeParticleCanvas() {
+      const w = window.innerWidth, h = window.innerHeight;
+      elements.particleCanvas.width = w * dpr;
+      elements.particleCanvas.height = h * dpr;
+      elements.particleCanvas.style.width = w + 'px';
+      elements.particleCanvas.style.height = h + 'px';
+      pCtx.setTransform(1,0,0,1,0,0);
+      pCtx.scale(dpr, dpr);
+    }
+    resizeParticleCanvas();
+    window.addEventListener('resize', resizeParticleCanvas);
+    function drawParticles() {
+      pCtx.clearRect(0,0,window.innerWidth,window.innerHeight);
+      const centerX = window.innerWidth/2;
+      const centerY = window.innerHeight/2 - 45;
+      const size = Math.min(window.innerWidth, window.innerHeight) * 0.03;
+      pCtx.beginPath();
+      for (let t=0; t<=2*Math.PI; t+=0.01) {
+        const x = 16 * Math.pow(Math.sin(t),3);
+        const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+        pCtx.lineTo(centerX + x*size, centerY + y*size);
       }
-      
-      updateTimer();
+      pCtx.closePath();
+      pCtx.strokeStyle = 'rgba(255,107,157,0.3)';
+      pCtx.lineWidth = 2;
+      pCtx.stroke();
+      requestAnimationFrame(drawParticles);
     }
+    drawParticles();
+  }
 
-    // 便签功能
-    function generateAllNotes() {
-      const startDate = new Date(CONFIG.startDate);
-      const today = new Date();
-      const notes = [];
-      
-      // 生成从开始日期到今天的所有便签
-      let currentDate = new Date(startDate);
-      while (currentDate <= today) {
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth() + 1;
-        const date = currentDate.getDate();
-        const day = currentDate.getDay();
-        const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
-        
-        // 计算想你的天数
-        const diffTime = Math.abs(currentDate - startDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        const dateStr = `${year}年${month}月${date}日 星期${dayNames[day]}`;
-        const noteText = `今天${month}月${date}日星期${dayNames[day]}，想老婆的第${diffDays}天`;
-        
-        notes.push({
-          date: dateStr,
-          text: noteText,
-          timestamp: currentDate.getTime()
-        });
-        
-        // 下一天
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
-      
-      state.notes = notes; // 最新的在前面
-      localStorage.setItem('loveNotes', JSON.stringify(state.notes));
+  // 事件监听（统一顶层函数）
+  function setupEventListeners() {
+    elements.heartContainer.addEventListener('click', showHeartEffect);
+    elements.heartContainer.addEventListener('touchstart', showHeartEffect, { passive:true });
+    elements.loveSaying.addEventListener('click', showDailyMessage);
+    elements.loveSaying.addEventListener('touchstart', showDailyMessage, { passive:true });
+
+    elements.noteButton.addEventListener('click', openNoteModal);
+    elements.closeNote.addEventListener('click', closeNoteModal);
+    elements.prevWeek.addEventListener('click', showPrevWeek);
+    elements.nextWeek.addEventListener('click', showNextWeek);
+    elements.noteModal.addEventListener('click', (e)=> { if (e.target === elements.noteModal) closeNoteModal(); });
+
+    // 周日记：使用顶层的 openDiaryModal / loadDiaryWeek 实现
+    elements.diaryButton.addEventListener('click', openDiaryModal);
+    elements.diaryClose.addEventListener('click', closeDiaryModal);
+    elements.diaryModal.addEventListener('click', (e)=> { if (e.target === elements.diaryModal) closeDiaryModal(); });
+    elements.diaryPrevWeek.addEventListener('click', async ()=> { if (diaryState.currentWeek>1) { diaryState.currentWeek--; await loadDiaryWeek(diaryState.currentWeek); diaryState.currentDayIndex=0; renderDiaryWeekHeader(); renderDiaryDay(); }});
+    elements.diaryNextWeek.addEventListener('click', async ()=> { diaryState.currentWeek++; await loadDiaryWeek(diaryState.currentWeek); diaryState.currentDayIndex=0; renderDiaryWeekHeader(); renderDiaryDay(); });
+    elements.diaryPrevDay.addEventListener('click', ()=> { if (diaryState.currentDayIndex>0) { diaryState.currentDayIndex--; renderDiaryDay(); }});
+    elements.diaryNextDay.addEventListener('click', ()=> { if (diaryState.currentDayIndex<6) { diaryState.currentDayIndex++; renderDiaryDay(); }});
+  }
+
+  // 爱心特效
+  let heartClickCount = 0;
+  function showHeartEffect() {
+    heartClickCount++;
+    const base = document.getElementById('fullscreenEffect'); if (!base) return;
+    const clone = base.cloneNode(true); clone.id = ''; clone.classList.add('active');
+    const textEl = clone.querySelector('.effect-text');
+    if (heartClickCount >= 10) { if (textEl) textEl.textContent = '老婆，等我回家😭'; heartClickCount = 0; } else { if (textEl) textEl.textContent = '💖'; }
+    document.body.appendChild(clone);
+    setTimeout(()=>{ try { clone.remove(); } catch(e){} }, 2200);
+  }
+
+  // 每日消息
+  function showDailyMessage() {
+    const today = new Date(); const dayOfWeek = today.getDay();
+    const messageIndex = dayOfWeek === 0 ? dailyMessages.length - 1 : dayOfWeek - 1;
+    const dailyMessage = dailyMessages[messageIndex] || '';
+    const base = document.getElementById('fullscreenEffect'); if (!base) return;
+    const clone = base.cloneNode(true); clone.id = ''; clone.classList.add('active');
+    const textEl = clone.querySelector('.effect-text'); if (textEl) textEl.textContent = dailyMessage;
+    document.body.appendChild(clone);
+    setTimeout(()=>{ try { clone.remove(); } catch(e){} }, 4200);
+  }
+
+  // 计时器
+  function startTimer() {
+    const startTime = new Date(CONFIG.startDate).getTime();
+    function updateTimer() {
+      const now = Date.now(); const diff = now - startTime;
+      const days = Math.floor(diff / (1000*60*60*24));
+      const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+      const minutes = Math.floor((diff % (1000*60*60)) / (1000*60));
+      const seconds = Math.floor((diff % (1000*60)) / 1000);
+      const milliseconds = diff % 1000;
+      elements.days.textContent = days;
+      elements.hours.textContent = String(hours).padStart(2,'0');
+      elements.minutes.textContent = String(minutes).padStart(2,'0');
+      elements.seconds.textContent = String(seconds).padStart(2,'0');
+      elements.milliseconds.textContent = String(milliseconds).padStart(3,'0');
+      requestAnimationFrame(updateTimer);
     }
+    updateTimer();
+  }
 
-    function openNoteModal() {
-      updateWeekDisplay();
-      elements.noteModal.classList.add('active');
+  // 便签功能：生成、打开、导航
+  function generateAllNotes() {
+    const startDate = new Date(CONFIG.startDate); const today = new Date(); const notes = [];
+    let currentDate = new Date(startDate);
+    while (currentDate <= today) {
+      const year = currentDate.getFullYear(); const month = currentDate.getMonth()+1; const date = currentDate.getDate();
+      const day = currentDate.getDay(); const dayNames = ['日','一','二','三','四','五','六'];
+      const diffTime = Math.abs(currentDate - startDate);
+      const diffDays = Math.ceil(diffTime / (1000*60*60*24));
+      const dateStr = `${year}年${month}月${date}日 星期${dayNames[day]}`;
+      const noteText = `今天${month}月${date}日星期${dayNames[day]}，想老婆的第${diffDays}天`;
+      notes.push({ date: dateStr, text: noteText, timestamp: currentDate.getTime() });
+      currentDate.setDate(currentDate.getDate() + 1);
     }
+    state.notes = notes;
+    localStorage.setItem('loveNotes', JSON.stringify(state.notes));
+  }
 
-    function closeNoteModal() {
-      elements.noteModal.classList.remove('active');
+  function openNoteModal() { updateWeekDisplay(); elements.noteModal.classList.add('active'); }
+  function closeNoteModal() { elements.noteModal.classList.remove('active'); }
+  function showPrevWeek() { if (state.currentWeek > 0) { state.currentWeek--; updateWeekDisplay(); } }
+  function showNextWeek() {
+    const totalWeeks = Math.ceil(state.notes.length / 7);
+    if (state.currentWeek < totalWeeks - 1) { state.currentWeek++; updateWeekDisplay(); }
+  }
+
+  function updateWeekDisplay() {
+    const startIndex = state.currentWeek * 7; const endIndex = startIndex + 7;
+    const weekNotes = state.notes.slice(startIndex, endIndex);
+    elements.weekTitle.textContent = `第${state.currentWeek + 1}周`;
+    elements.prevWeek.disabled = state.currentWeek === 0;
+    const totalWeeks = Math.ceil(state.notes.length / 7);
+    elements.nextWeek.disabled = state.currentWeek >= totalWeeks - 1;
+    elements.noteList.innerHTML = '';
+    if (weekNotes.length === 0) {
+      const emptyItem = document.createElement('li'); emptyItem.className = 'note-item'; emptyItem.innerHTML = '<div class="note-text">暂无记录</div>'; elements.noteList.appendChild(emptyItem);
+    } else {
+      weekNotes.forEach(note => {
+        const noteItem = document.createElement('li'); noteItem.className = 'note-item';
+        noteItem.innerHTML = `<div class="note-date">${note.date}</div><div class="note-text">${note.text}</div>`;
+        elements.noteList.appendChild(noteItem);
+      });
     }
+  }
 
-    function showPrevWeek() {
-      if (state.currentWeek > 0) {
-        state.currentWeek--;
-        updateWeekDisplay();
-      }
+  // ------------------------
+  // 周日记：保留并使用 diaryState / loadDiaryWeek 这套实现（顶层）
+  // ------------------------
+  const WEEKDAY_NAMES = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+  const diaryState = { currentWeek: 1, currentDayIndex: 0, weekEntries: [] };
+
+  async function loadDiaryWeek(weekNumber) {
+    try {
+      // md 文件与 index 在同一目录时使用 ./{weekNumber}.md
+      // 若你的 md 在子目录 md/ 下，请改为 `./md/${weekNumber}.md?${Date.now()}`
+      const res = await fetch(`./${weekNumber}.md?${Date.now()}`);
+      if (!res.ok) throw new Error('fetch failed');
+      const raw = await res.text();
+      // 解析 { ... } 块
+      const blocks = [...raw.matchAll(/\{([\s\S]*?)\}/g)].map(m => m[1].trim());
+      diaryState.weekEntries = Array.from({ length: 7 }, (_, i) => {
+        const block = blocks[i] || '';
+        const lines = block.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+        let score = 0, content = lines;
+        if (lines[0] && /^\(\d+\)$/.test(lines[0])) {
+          score = parseInt(lines[0].replace(/[()]/g,''), 10);
+          content = lines.slice(1);
+        }
+        return { score, text: content.join('\n') || '暂无日记' };
+      });
+    } catch (e) {
+      diaryState.weekEntries = Array.from({ length: 7 }, ()=> ({ score:0, text:'暂无日记' }));
     }
+  }
 
-    function showNextWeek() {
-      const totalWeeks = Math.ceil(state.notes.length / 7);
-      if (state.currentWeek < totalWeeks - 1) {
-        state.currentWeek++;
-        updateWeekDisplay();
-      }
-    }
+  function renderDiaryDay() {
+    const e = diaryState.weekEntries[diaryState.currentDayIndex] || {score:0,text:'暂无日记'};
+    elements.diaryDayTitle.textContent = WEEKDAY_NAMES[diaryState.currentDayIndex];
+    elements.diaryHearts.textContent = `想老婆指数：${'❤️'.repeat(e.score)}`;
+    elements.diaryText.textContent = e.text;
+    elements.diaryPrevDay.disabled = diaryState.currentDayIndex === 0;
+    elements.diaryNextDay.disabled = diaryState.currentDayIndex === 6;
+  }
 
-    function updateWeekDisplay() {
-      const startIndex = state.currentWeek * 7;
-      const endIndex = startIndex + 7;
-      const weekNotes = state.notes.slice(startIndex, endIndex);
-      
-      // 更新周标题
-      elements.weekTitle.textContent = `第${state.currentWeek + 1}周`;
-      
-      // 更新导航按钮状态
-      elements.prevWeek.disabled = state.currentWeek === 0;
-      const totalWeeks = Math.ceil(state.notes.length / 7);
-      elements.nextWeek.disabled = state.currentWeek >= totalWeeks - 1;
-      
-      // 更新便签列表
-      elements.noteList.innerHTML = '';
-      
-      if (weekNotes.length === 0) {
-        const emptyItem = document.createElement('li');
-        emptyItem.className = 'note-item';
-        emptyItem.innerHTML = '<div class="note-text">暂无记录</div>';
-        elements.noteList.appendChild(emptyItem);
-      } else {
-        weekNotes.forEach(note => {
-          const noteItem = document.createElement('li');
-          noteItem.className = 'note-item';
-          noteItem.innerHTML = `
-            <div class="note-date">${note.date}</div>
-            <div class="note-text">${note.text}</div>
-          `;
-          elements.noteList.appendChild(noteItem);
-        });
-      }
-    }
+  function renderDiaryWeekHeader() {
+    elements.diaryWeekTitle.textContent = `第${diaryState.currentWeek}周`;
+  }
 
-    // 页面加载完成后初始化
-    window.addEventListener('load', init);
-  </script>
+  async function openDiaryModal() {
+    elements.diaryModal.classList.add('active');
+    await loadDiaryWeek(diaryState.currentWeek);
+    diaryState.currentDayIndex = 0;
+    renderDiaryWeekHeader();
+    renderDiaryDay();
+  }
+
+  function closeDiaryModal() { elements.diaryModal.classList.remove('active'); }
+
+  // ------------------------
+  // 页面加载
+  window.addEventListener('load', init);
+</script>
 </body>
 </html>
