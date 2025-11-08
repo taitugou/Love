@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>老婆的日记</title>
+  <style>
+    :root {
+      --bg: #0b0b0b;
+      --fg: #ffffff;
+      --muted: #9aa0a6;
+      --accent: #2ea44f;
+      --btn: #1f2937;
+      --btn-hover: #374151;
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    }
+
+    .viewport {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: .5rem;
+      align-items: center;
+      justify-content: center;
+      padding: .35rem;
+      background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,0));
+    }
+    .toolbar.bottom {
+      background: linear-gradient(0deg, rgba(0,0,0,.35), rgba(0,0,0,0));
+    }
+    .spacer { flex: 1; }
+
+    .btn {
+      border: 0;
+      border-radius: 999px;
+      padding: .45rem .65rem;
+      min-width: 2.25rem;
+      min-height: 2.25rem;
+      font-size: .9rem;
+      color: var(--fg);
+      background: var(--btn);
+      outline: none;
+    }
+    .btn:hover { background: var(--btn-hover); }
+    .btn.primary { background: var(--accent); color: #fff; }
+    .btn.small { padding: .35rem .5rem; font-size: .85rem; }
+
+    .counter {
+      color: var(--muted);
+      font-size: .9rem;
+      padding: 0 .4rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stage {
+      position: relative;
+      overflow: hidden;
+      background: #000;
+      touch-action: none;
+    }
+
+    .img-wrap {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) translate(0px, 0px) scale(1);
+      transform-origin: center center;
+      will-change: transform;
+    }
+
+    .img-wrap img {
+      display: block;
+      max-width: 90vw;
+      max-height: 70vh;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.35);
+    }
+
+    .hint {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--muted);
+      font-size: .95rem;
+      text-align: center;
+    }
+
+    .fade-in { animation: fade .28s ease-out; }
+    @keyframes fade { from { opacity: 0 } to { opacity: 1 } }
+  </style>
+</head>
+<body>
+  <div class="viewport" id="app">
+    <div class="toolbar top">
+      <button class="btn small" id="fullscreenBtn">⛶</button>
+      <div class="spacer"></div>
+      <div class="counter" id="countLabel">…/…</div>
+      <div class="spacer"></div>
+      <button class="btn small" id="toggleUiBtn">⋯</button>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="img-wrap" id="imgWrap">
+        <img id="photo" alt="diary image" />
+      </div>
+      <div class="hint" id="hint"></div>
+    </div>
+
+    <div class="toolbar bottom">
+      <button class="btn" id="prevBtn">←</button>
+      <button class="btn primary" id="nextBtn">→</button>
+      <button class="btn" id="zoomOutBtn">－</button>
+      <button class="btn" id="zoomResetBtn">◎</button>
+      <button class="btn" id="zoomInBtn">＋</button>
+    </div>
+  </div>
+
+  <script>
+    const BASE_URL = 'https://love.taitugou.icu/diary/';
+    const EXT = '.jpg';
+    const MAX_CAP = 5000;
+    const WINDOW = 10;
+
+    const els = {
+      imgWrap: document.getElementById('imgWrap'),
+      img: document.getElementById('photo'),
+      hint: document.getElementById('hint'),
+      prev: document.getElementById('prevBtn'),
+      next: document.getElementById('nextBtn'),
+      zoomIn: document.getElementById('zoomInBtn'),
+      zoomOut: document.getElementById('zoomOutBtn'),
+      zoomReset: document.getElementById('zoomResetBtn'),
+      count: document.getElementById('countLabel'),
+      stage: document.getElementById('stage')
+    };
+
+    let total = 0, index = 0;
+    let scale = 1, tx = 0, ty = 0;
+
+    function applyTransform() {
+      els.imgWrap.style.transform =
+        `translate(-50%, -50%) translate(${tx}px, ${ty}px) scale(${scale})`;
+    }
+    function resetTransform() {
+      scale = 1; tx = 0; ty = 0;
+      applyTransform();
+    }
+    function zoomBy(factor) {
+      scale = Math.max(0.25, Math.min(scale * factor, 8));
+      applyTransform();
+    }
+
+    async function discoverLatest() {
+      let found = -1;
+      for (let i = 0; i < MAX_CAP; i += WINDOW) {
+        const batch = [];
+        for (let k = 0; k < WINDOW && (i + k) < MAX_CAP; k++) {
+          const url = BASE_URL + (i + k) + EXT;
+          batch.push(fetch(url, { method: 'HEAD' }).then(res => res.ok ? i + k : -1).catch(() => -1));
+        }
+        const results = await Promise.all(batch);
+        results.forEach(r => { if (r >= 0) found = Math.max(found, r); });
+        if (results.includes(-1) && found >= 0) break;
+      }
+      if (found >= 0) {
+        total = found + 1;
+        index = total - 1; // 默认展示最新
+        showIndex(index);
+      }
+    }
+
+    async function showIndex(i) {
+      index = Math.max(0, Math.min(i, total - 1));
+      els.count.textContent = `${index + 1} / ${total}`;
+      const url = BASE_URL + index + EXT;
+      const img = new Image();
+      img.src = url;
+      img.onload = () => {
+        els.img.src = url;
+        resetTransform();
+      };
+    }
+
+    els.prev.addEventListener('click', () => showIndex(index - 1));
+    els.next.addEventListener('click', () => showIndex(index + 1));
+    els.zoomIn.addEventListener('click', () => zoomBy(1.2));
+    els.zoomOut.addEventListener('click', () => zoomBy(1 / 1.2));
+    els.zoomReset.addEventListener('click', () => resetTransform());
+
+    // 拖拽 & 缩放（支持鼠标 + 触摸）
+const pointers = new Map();
+let pinchPrevDist = 0;
+
+els.stage.addEventListener('pointerdown', (e) => {
+  els.stage.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+});
+
+els.stage.addEventListener('pointermove', (e) => {
+  if (!pointers.has(e.pointerId)) return;
+  const prev = pointers.get(e.pointerId);
+  const dx = e.clientX - prev.x;
+  const dy = e.clientY - prev.y;
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+  if (pointers.size === 1) {
+    // 单指拖动
+    tx += dx;
+    ty += dy;
+    applyTransform();
+  } else if (pointers.size === 2) {
+    // 双指缩放
+    const pts = Array.from(pointers.values());
+    const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    if (pinchPrevDist === 0) pinchPrevDist = dist;
+    const factor = dist / pinchPrevDist;
+    pinchPrevDist = dist;
+    zoomBy(factor);
+  }
+});
+
+els.stage.addEventListener('pointerup', (e) => {
+  pointers.delete(e.pointerId);
+  if (pointers.size < 2) pinchPrevDist = 0;
+});
+els.stage.addEventListener('pointercancel', (e) => {
+  pointers.delete(e.pointerId);
+  if (pointers.size < 2) pinchPrevDist = 0;
+});
+
+    // 初始化
+    (async function init() {
+      await discoverLatest();
+    })();
+  </script>
+</body>
+</html>
