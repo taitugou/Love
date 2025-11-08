@@ -286,7 +286,7 @@
 
   <button type="button" class="note-button floating-button" id="noteButton">打卡便签 💝</button>
   <button type="button" class="diary-button floating-button" id="diaryButton">日记便签 📘</button>
-  <button type="button" class="draw-button floating-button" id="drawButton">涂鸦板 🎨</button>
+  <button type="button" class="draw-button floating-button" id="drawButton">老婆日记 😘</button>
 
   <div class="diary-modal" id="diaryModal">
     <div class="diary-content">
@@ -431,7 +431,7 @@
   function setupEventListeners() {
     elements.drawButton = document.getElementById('drawButton');
 elements.drawButton.addEventListener('click', () => {
-  window.location.href = 'https://kleki.com';
+  window.location.href = './diary.html';
 });
     elements.heartContainer.addEventListener('click', showHeartEffect);
     elements.heartContainer.addEventListener('touchstart', showHeartEffect, { passive:true });
