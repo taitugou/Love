@@ -1,251 +1,427 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
+<!doctype html>
+<html lang="zh-Hans">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <title>老婆的日记</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>留言墙 · 冰冰我爱你</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    :root {
-      --bg: #0b0b0b;
-      --fg: #ffffff;
-      --muted: #9aa0a6;
-      --accent: #2ea44f;
-      --btn: #1f2937;
-      --btn-hover: #374151;
+    :root{
+      --bg:#0f1724;
+      --card:#0b1220;
+      --accent:#ff6b9a;
+      --muted:#9aa4b2;
+      --glass: rgba(255,255,255,0.04);
+      --watch-size: 360px;
     }
-    html, body {
-      height: 100%;
-      margin: 0;
-      background: var(--bg);
-      color: var(--fg);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+    body{
+      background: linear-gradient(180deg,#071021 0%, #071827 60%);
+      display:flex;align-items:center;justify-content:center;padding:20px;color:#e6eef8;
     }
 
-    .viewport {
-      position: fixed;
-      inset: 0;
-      display: grid;
-      grid-template-rows: auto 1fr auto;
+    /* 小型手表容器 */
+    .watch {
+      width: var(--watch-size);
+      max-width:92vw;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius: 28px;
+      box-shadow: 0 8px 30px rgba(2,6,23,0.7), inset 0 1px 0 rgba(255,255,255,0.02);
+      padding: 18px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      align-items:center;
     }
 
-    .toolbar {
-      display: flex;
-      gap: .5rem;
-      align-items: center;
-      justify-content: center;
-      padding: .35rem;
-      background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,0));
+    .header {
+      width:100%;
+      display:flex;align-items:center;justify-content:space-between;
     }
-    .toolbar.bottom {
-      background: linear-gradient(0deg, rgba(0,0,0,.35), rgba(0,0,0,0));
+    .title {
+      display:flex;align-items:center;gap:10px;
     }
-    .spacer { flex: 1; }
+    .logo {
+      width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#ff9cc2);
+      display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:18px;
+      box-shadow:0 6px 18px rgba(255,107,154,0.18);
+    }
+    .title h1{margin:0;font-size:16px;letter-spacing:0.2px;}
+    .subtitle{font-size:11px;color:var(--muted);margin-top:2px;}
 
+    /* message list */
+    .list {
+      width:100%;
+      max-height:320px;
+      overflow:auto;
+      padding:8px;
+      display:flex;flex-direction:column-reverse;gap:8px;
+      border-radius:12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+    }
+    .msg {
+      display:flex;align-items:center;justify-content:space-between;
+      gap:12px;padding:10px;border-radius:10px;background:var(--glass);
+      border:1px solid rgba(255,255,255,0.02);
+    }
+    .msg .left{display:flex;align-items:center;gap:10px;}
+    .avatar {
+      width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#ffd1e0,#ff9cc2);
+      /* 隐藏头像：不显示首字母生成的头像 */
+      display:none !important;
+      font-weight:700;color:#3b0b1a;font-size:14px;
+    }
+    .content {font-size:14px;color:#eaf3ff;}
+    .meta {font-size:11px;color:var(--muted);margin-top:4px;}
+
+    .actions {display:flex;gap:8px;align-items:center;}
     .btn {
-      border: 0;
-      border-radius: 999px;
-      padding: .45rem .65rem;
-      min-width: 2.25rem;
-      min-height: 2.25rem;
-      font-size: .9rem;
-      color: var(--fg);
-      background: var(--btn);
-      outline: none;
+      background:transparent;border:0;color:var(--muted);cursor:pointer;padding:6px;border-radius:8px;
     }
-    .btn:hover { background: var(--btn-hover); }
-    .btn.primary { background: var(--accent); color: #fff; }
-    .btn.small { padding: .35rem .5rem; font-size: .85rem; }
+    .btn:hover{background:rgba(255,255,255,0.02);color:#fff;}
 
-    .counter {
-      color: var(--muted);
-      font-size: .9rem;
-      padding: 0 .4rem;
-      font-variant-numeric: tabular-nums;
+    /* input area */
+    .composer {
+      width:100%;display:flex;gap:8px;align-items:center;
     }
-
-    .stage {
-      position: relative;
-      overflow: hidden;
-      background: #000;
-      touch-action: none;
+    input[type="text"]{
+      flex:1;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);
+      background:transparent;color:inherit;font-size:14px;outline:none;
     }
+    .send {
+      background:linear-gradient(180deg,var(--accent),#ff8fb0);border:0;color:#fff;padding:10px 14px;border-radius:12px;
+      cursor:pointer;font-weight:600;box-shadow:0 6px 18px rgba(255,107,154,0.18);
+    }
+    .send:active{transform:translateY(1px);}
 
-    .img-wrap {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%) translate(0px, 0px) scale(1);
-      transform-origin: center center;
-      will-change: transform;
+    /* log */
+    pre#log{width:100%;height:60px;overflow:auto;background:transparent;border-radius:8px;color:var(--muted);font-size:12px;padding:8px;margin:0;border:1px dashed rgba(255,255,255,0.02);}
+
+    /* heart effect */
+    .heart {
+      position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;
+      font-size:28px;opacity:0;filter:drop-shadow(0 6px 18px rgba(255,107,154,0.25));
+    }
+    .heart.fly {
+      animation: flyUp 1200ms ease-out forwards;
+    }
+    @keyframes flyUp {
+      0% { transform:translate(-50%, -10%) scale(0.6); opacity:1; }
+      40% { transform:translate(-50%, -60%) scale(1.1); opacity:1; }
+      100% { transform:translate(-50%, -180%) scale(0.8); opacity:0; }
     }
 
-    .img-wrap img {
-      display: block;
-      max-width: 90vw;
-      max-height: 70vh;
-      object-fit: contain;
-      border-radius: 8px;
-      box-shadow: 0 8px 24px rgba(0,0,0,.35);
+    /* big message */
+    .big-love {
+      position:fixed;left:50%;top:12%;transform:translateX(-50%);z-index:40;
+      font-size:28px;color:var(--accent);font-weight:800;opacity:0;pointer-events:none;
+      text-shadow:0 6px 30px rgba(255,107,154,0.12);
+    }
+    .big-love.show { animation: pop 900ms cubic-bezier(.2,.9,.3,1) forwards; }
+    @keyframes pop {
+      0% { transform:translateX(-50%) scale(0.6); opacity:0; }
+      40% { transform:translateX(-50%) scale(1.08); opacity:1; }
+      100% { transform:translateX(-50%) scale(1); opacity:1; }
     }
 
-    .hint {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      color: var(--muted);
-      font-size: .95rem;
-      text-align: center;
+    /* responsive small watch */
+    @media (max-width:420px){
+      :root{--watch-size: 360px;}
+      .logo{width:40px;height:40px}
+      .title h1{font-size:15px}
     }
-
-    .fade-in { animation: fade .28s ease-out; }
-    @keyframes fade { from { opacity: 0 } to { opacity: 1 } }
   </style>
 </head>
 <body>
-  <div class="viewport" id="app">
-    <div class="toolbar top">
-      <button class="btn small" id="fullscreenBtn">⛶</button>
-      <div class="spacer"></div>
-      <div class="counter" id="countLabel">…/…</div>
-      <div class="spacer"></div>
-      <button class="btn small" id="toggleUiBtn">⋯</button>
-    </div>
-
-    <div class="stage" id="stage">
-      <div class="img-wrap" id="imgWrap">
-        <img id="photo" alt="diary image" />
+  <div class="watch" role="application" aria-label="留言墙">
+    <div class="header">
+      <div class="title">
+        <div class="logo">💖</div>
+        <div>
+          <h1>冰冰留言墙</h1>
+        </div>
       </div>
-      <div class="hint" id="hint"></div>
     </div>
 
-    <div class="toolbar bottom">
-      <button class="btn" id="prevBtn">←</button>
-      <button class="btn primary" id="nextBtn">→</button>
-      <button class="btn" id="zoomOutBtn">－</button>
-      <button class="btn" id="zoomResetBtn">◎</button>
-      <button class="btn" id="zoomInBtn">＋</button>
+    <div class="list" id="msgList" aria-live="polite"></div>
+
+    <div class="composer">
+      <input id="content" type="text" placeholder="写点话给耀耀..." maxlength="200" />
+      <button id="sendBtn" class="send">发</button>
     </div>
+
+    <div id="pagination" class="pagination" aria-label="分页"></div>
   </div>
 
-  <script>
-    const BASE_URL = 'https://love.taitugou.icu/diary/';
-    const EXT = '.jpg';
-    const MAX_CAP = 5000;
-    const WINDOW = 10;
+  <div class="heart" id="heart">💖</div>
+  <div class="big-love" id="bigLove">冰冰 我爱你！</div>
 
-    const els = {
-      imgWrap: document.getElementById('imgWrap'),
-      img: document.getElementById('photo'),
-      hint: document.getElementById('hint'),
-      prev: document.getElementById('prevBtn'),
-      next: document.getElementById('nextBtn'),
-      zoomIn: document.getElementById('zoomInBtn'),
-      zoomOut: document.getElementById('zoomOutBtn'),
-      zoomReset: document.getElementById('zoomResetBtn'),
-      count: document.getElementById('countLabel'),
-      stage: document.getElementById('stage')
-    };
+<script>
+  // ---------- 配置 ----------
+  const SUPABASE_URL = "https://sxqtvpqiemncvqppanms.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_hnj-Fg4a63aZtkEXXBBcGw_W6ZEuw0e";
 
-    let total = 0, index = 0;
-    let scale = 1, tx = 0, ty = 0;
+  // ---------- 初始化 ----------
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    function applyTransform() {
-      els.imgWrap.style.transform =
-        `translate(-50%, -50%) translate(${tx}px, ${ty}px) scale(${scale})`;
-    }
-    function resetTransform() {
-      scale = 1; tx = 0; ty = 0;
-      applyTransform();
-    }
-    function zoomBy(factor) {
-      scale = Math.max(0.25, Math.min(scale * factor, 8));
-      applyTransform();
-    }
+  const msgList = document.getElementById('msgList');
+  const contentEl = document.getElementById('content');
+  const sendBtn = document.getElementById('sendBtn');
+  const paginationEl = document.getElementById('pagination');
+  const heartEl = document.getElementById('heart');
+  const bigLoveEl = document.getElementById('bigLove');
 
-    async function discoverLatest() {
-      let found = -1;
-      for (let i = 0; i < MAX_CAP; i += WINDOW) {
-        const batch = [];
-        for (let k = 0; k < WINDOW && (i + k) < MAX_CAP; k++) {
-          const url = BASE_URL + (i + k) + EXT;
-          batch.push(fetch(url, { method: 'HEAD' }).then(res => res.ok ? i + k : -1).catch(() => -1));
-        }
-        const results = await Promise.all(batch);
-        results.forEach(r => { if (r >= 0) found = Math.max(found, r); });
-        if (results.includes(-1) && found >= 0) break;
-      }
-      if (found >= 0) {
-        total = found + 1;
-        index = total - 1; // 默认展示最新
-        showIndex(index);
-      }
-    }
+  // 分页和计数
+  const pageSize = 9;
+  let currentPage = 1;
+  let totalCount = 0;
 
-    async function showIndex(i) {
-      index = Math.max(0, Math.min(i, total - 1));
-      els.count.textContent = `${index + 1} / ${total}`;
-      const url = BASE_URL + index + EXT;
-      const img = new Image();
-      img.src = url;
-      img.onload = () => {
-        els.img.src = url;
-        resetTransform();
-      };
-    }
-
-    els.prev.addEventListener('click', () => showIndex(index - 1));
-    els.next.addEventListener('click', () => showIndex(index + 1));
-    els.zoomIn.addEventListener('click', () => zoomBy(1.2));
-    els.zoomOut.addEventListener('click', () => zoomBy(1 / 1.2));
-    els.zoomReset.addEventListener('click', () => resetTransform());
-
-    // 拖拽 & 缩放（支持鼠标 + 触摸）
-const pointers = new Map();
-let pinchPrevDist = 0;
-
-els.stage.addEventListener('pointerdown', (e) => {
-  els.stage.setPointerCapture(e.pointerId);
-  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-});
-
-els.stage.addEventListener('pointermove', (e) => {
-  if (!pointers.has(e.pointerId)) return;
-  const prev = pointers.get(e.pointerId);
-  const dx = e.clientX - prev.x;
-  const dy = e.clientY - prev.y;
-  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
-  if (pointers.size === 1) {
-    // 单指拖动
-    tx += dx;
-    ty += dy;
-    applyTransform();
-  } else if (pointers.size === 2) {
-    // 双指缩放
-    const pts = Array.from(pointers.values());
-    const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-    if (pinchPrevDist === 0) pinchPrevDist = dist;
-    const factor = dist / pinchPrevDist;
-    pinchPrevDist = dist;
-    zoomBy(factor);
+  function log(msg){
+    const t = new Date().toLocaleTimeString();
+    console.log(`[${t}] ${msg}`);
   }
-});
 
-els.stage.addEventListener('pointerup', (e) => {
-  pointers.delete(e.pointerId);
-  if (pointers.size < 2) pinchPrevDist = 0;
-});
-els.stage.addEventListener('pointercancel', (e) => {
-  pointers.delete(e.pointerId);
-  if (pointers.size < 2) pinchPrevDist = 0;
-});
+  // 渲染单条消息
+  function renderMessage(row, hideAvatar = false){
+    const div = document.createElement('div');
+    div.className = 'msg';
+    div.dataset.id = row.id;
+    if (hideAvatar) div.dataset.noavatar = '1';
+    const left = document.createElement('div'); left.className = 'left';
+    const avatar = document.createElement('div'); avatar.className = 'avatar';
+    avatar.textContent = (row.content || '').slice(0,1) || '冰';
+    if (hideAvatar) avatar.style.display = 'none';
+    const contentWrap = document.createElement('div');
+    const contentText = document.createElement('div'); contentText.className = 'content';
+    contentText.textContent = row.content;
+    const meta = document.createElement('div'); meta.className = 'meta';
+    meta.textContent = new Date(row.created_at).toLocaleString();
+    contentWrap.appendChild(contentText); contentWrap.appendChild(meta);
+    left.appendChild(avatar); left.appendChild(contentWrap);
 
-    // 初始化
-    (async function init() {
-      await discoverLatest();
-    })();
-  </script>
+    const actions = document.createElement('div'); actions.className = 'actions';
+    const delBtn = document.createElement('button'); delBtn.className = 'btn'; delBtn.title='删除';
+    delBtn.innerHTML = '🗑';
+    delBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!confirm('确认删除这条留言？')) return;
+      try {
+        const { error } = await supabaseClient.from('messages').delete().eq('id', row.id);
+        if (error) {
+          log('删除失败: ' + JSON.stringify(error));
+        } else {
+          log('已删除 id=' + row.id);
+          // 立即从 UI 中移除，不刷新页面或重新读取全部留言
+          removeMessageFromUI(row.id);
+        }
+      } catch (err) {
+        log('删除异常: ' + err.message);
+      }
+    });
+
+    actions.appendChild(delBtn);
+    div.appendChild(left); div.appendChild(actions);
+    return div;
+  }
+
+  // 清空并渲染当前页（按时间降序），支持分页
+  async function loadMessages(page = 1){
+    currentPage = page;
+    try {
+      const start = (page - 1) * pageSize;
+      const end = start + pageSize - 1;
+      const { data, error, count } = await supabaseClient
+        .from('messages')
+        .select('*', { count: 'exact' })
+        .order('id', { ascending: false })
+        .range(start, end);
+      if (error) {
+        log('加载失败: ' + JSON.stringify(error));
+        return;
+      }
+      totalCount = count ?? (Array.isArray(data) ? data.length : 0);
+      msgList.innerHTML = '';
+      for (const row of data) {
+        const node = renderMessage(row);
+        msgList.appendChild(node);
+      }
+      buildPagination();
+      log('已加载 ' + (data ? data.length : 0) + ' 条留言 (第' + page + '页)');
+    } catch (err) {
+      log('加载异常: ' + err.message);
+    }
+  }
+
+  // 添加单条到 UI（插入到顶部）
+  // fromRealtime: 如果为 true，则表示这次插入来自 realtime 事件（不应修改总数）
+  function addMessageToUI(row, options = {}){
+    const { fromRealtime = false, hideAvatar = false } = options;
+    // 如果已存在则先读取是否隐藏 avatar，然后移除旧的
+    const existing = msgList.querySelector(`[data-id="${row.id}"]`);
+    let preserveNoAvatar = false;
+    if (existing) {
+      preserveNoAvatar = existing.dataset.noavatar === '1';
+      existing.remove();
+    }
+    const useHide = preserveNoAvatar || hideAvatar;
+    // 仅当当前页为第一页时将最新消息插入到顶部以便用户能立即看到
+    if (currentPage === 1) {
+      const node = renderMessage(row, useHide);
+      msgList.insertBefore(node, msgList.firstChild);
+      // 保持当前页数量不超过 pageSize
+      const items = msgList.querySelectorAll('.msg');
+      if (items.length > pageSize) items[items.length - 1].remove();
+    }
+    if (!fromRealtime) totalCount++;
+    buildPagination();
+  }
+
+  // 移除 UI（删除成功后调用）
+  function removeMessageFromUI(id){
+    const el = msgList.querySelector(`[data-id="${id}"]`);
+    if (el) {
+      el.remove();
+      totalCount = Math.max(0, totalCount - 1);
+    }
+    buildPagination();
+    // 如果当前页已空且不是第一页，则加载前一页以保持显示（仅在必要时触发重新读取当前页）
+    if (msgList.children.length === 0 && currentPage > 1) {
+      loadMessages(currentPage - 1);
+    }
+  }
+
+  // 更新已有消息（来自 realtime 的 UPDATE）
+  function updateMessageInUI(row){
+    const el = msgList.querySelector(`[data-id="${row.id}"]`);
+    if (el) {
+      const contentText = el.querySelector('.content');
+      const meta = el.querySelector('.meta');
+      if (contentText) contentText.textContent = row.content;
+      if (meta) meta.textContent = new Date(row.created_at).toLocaleString();
+    } else {
+      // 如果不在当前页，则在需要时插入（不改变总数，因为这是更新）
+      addMessageToUI(row, { fromRealtime: true });
+    }
+  }
+
+  // 构建分页控件
+  function buildPagination(){
+    const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+    paginationEl.innerHTML = '';
+    const prev = document.createElement('button'); prev.textContent = '上一页'; prev.className = 'btn'; prev.disabled = currentPage <= 1; prev.addEventListener('click', () => { if (currentPage>1) loadMessages(currentPage-1); });
+    paginationEl.appendChild(prev);
+
+    const maxButtons = 7;
+    if (totalPages <= maxButtons) {
+      for (let p = 1; p <= totalPages; p++) {
+        const b = document.createElement('button'); b.textContent = p; b.className = 'btn'; if (p === currentPage) { b.disabled = true; b.style.fontWeight = '700'; }
+        b.addEventListener('click', () => loadMessages(p));
+        paginationEl.appendChild(b);
+      }
+    } else {
+      const createPageBtn = (p) => { const b = document.createElement('button'); b.textContent = p; b.className = 'btn'; if (p === currentPage) { b.disabled = true; b.style.fontWeight = '700'; } b.addEventListener('click', () => loadMessages(p)); paginationEl.appendChild(b); };
+      createPageBtn(1);
+      if (currentPage > 4) { const ell = document.createElement('span'); ell.textContent = '...'; ell.style.margin = '0 6px'; paginationEl.appendChild(ell); }
+      const start = Math.max(2, currentPage - 2);
+      const end = Math.min(totalPages - 1, currentPage + 2);
+      for (let p = start; p <= end; p++) createPageBtn(p);
+      if (currentPage < totalPages - 3) { const ell = document.createElement('span'); ell.textContent = '...'; ell.style.margin = '0 6px'; paginationEl.appendChild(ell); }
+      createPageBtn(totalPages);
+    }
+
+    const next = document.createElement('button'); next.textContent = '下一页'; next.className = 'btn'; next.disabled = currentPage >= totalPages; next.addEventListener('click', () => { if (currentPage<totalPages) loadMessages(currentPage+1); });
+    paginationEl.appendChild(next);
+  }
+
+  // 发送爱心特效与大字
+  function triggerLoveEffects(){
+    // heart fly
+    heartEl.classList.remove('fly');
+    void heartEl.offsetWidth;
+    heartEl.classList.add('fly');
+
+    // big love
+    bigLoveEl.classList.remove('show');
+    void bigLoveEl.offsetWidth;
+    bigLoveEl.classList.add('show');
+    setTimeout(()=> bigLoveEl.classList.remove('show'), 1800);
+  }
+
+  // 发送消息
+  sendBtn.addEventListener('click', async () => {
+    const content = contentEl.value.trim();
+    if (!content) { log('内容为空'); return; }
+    sendBtn.disabled = true;
+    sendBtn.textContent = '发送中...';
+    log('开始插入...');
+    try {
+      // 必须传数组并加 .select() 才返回插入后的行
+      const { data, error } = await supabaseClient
+        .from('messages')
+        .insert([{ content }])
+        .select();
+      if (error) {
+        log('插入失败: ' + JSON.stringify(error));
+      } else {
+        log('插入成功: ' + JSON.stringify(data));
+        contentEl.value = '';
+        triggerLoveEffects();
+        // UI 会由 realtime 自动添加，但我们也可以立即插入以获得更快反馈
+        // 发送者的本地插入不显示头像（hideAvatar）
+        if (Array.isArray(data) && data.length) addMessageToUI(data[0], { hideAvatar: true });
+      }
+    } catch (err) {
+      log('插入异常: ' + err.message);
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.textContent = '发';
+    }
+  });
+
+  // 回车发送
+  contentEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      sendBtn.click();
+    }
+  });
+
+  // ---------- realtime 监听 ----------
+  // 使用 postgres_changes 监听 INSERT / DELETE / UPDATE
+  const channel = supabaseClient.channel('public:messages')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+      const row = payload.new;
+      log('Realtime: 新增 id=' + row.id);
+      // 来自 realtime 的插入不应改变 totalCount（我们在本地插入时会已更新总数）
+      addMessageToUI(row, { fromRealtime: true });
+    })
+    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, payload => {
+      const id = payload.old.id;
+      log('Realtime: 删除 id=' + id);
+      removeMessageFromUI(id);
+    })
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, payload => {
+      const row = payload.new;
+      log('Realtime: 更新 id=' + row.id);
+      // 更新现有元素（不改变总数）
+      updateMessageInUI(row);
+    })
+    .subscribe(status => {
+      log('Realtime 订阅状态: ' + JSON.stringify(status));
+    });
+
+  // ---------- 启动时加载 ----------
+  (async function init(){
+    log('初始化中...');
+    await loadMessages();
+    log('初始化完成，等待实时更新...');
+  })();
+
+  // 清理（页面卸载时取消订阅）
+  window.addEventListener('beforeunload', () => {
+    try { supabaseClient.removeChannel(channel); } catch(e){}
+  });
+</script>
 </body>
 </html>
