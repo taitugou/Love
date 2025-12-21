@@ -7,26 +7,30 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     :root{
-      --bg:#0f1724;
-      --card:#0b1220;
-      --accent:#ff6b9a;
-      --muted:#9aa4b2;
-      --glass: rgba(255,255,255,0.04);
+      /* 轻奢浅色配色 */
+      --bg: #f6f7fb;            /* 页面背景（浅灰白） */
+      --card: #ffffff;          /* 卡片/容器背景（纯白） */
+      --accent: #d63384;       /* 主色/点缀，略柔和的玫粉色 */
+      --muted: #6b7280;        /* 次要文字颜色（灰色） */
+      --glass: rgba(0,0,0,0.03);/* 轻微玻璃感阴影 */
       --watch-size: 360px;
     }
     html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
     body{
-      background: linear-gradient(180deg,#071021 0%, #071827 60%);
-      display:flex;align-items:center;justify-content:center;padding:20px;color:#e6eef8;
+      /* 柔和的浅色渐变背景，营造高级感 */
+      background: linear-gradient(180deg,#fbfbfd 0%, #f2f4f8 60%);
+      display:flex;align-items:center;justify-content:center;padding:20px;color:#0f1724;
     }
 
     /* 小型手表容器 */
     .watch {
       width: var(--watch-size);
       max-width:92vw;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      /* 白色卡片，轻柔阴影，保持现代感 */
+      background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.98));
       border-radius: 28px;
-      box-shadow: 0 8px 30px rgba(2,6,23,0.7), inset 0 1px 0 rgba(255,255,255,0.02);
+      box-shadow: 0 10px 30px rgba(15,23,36,0.06), inset 0 1px 0 rgba(0,0,0,0.02);
+      border: 1px solid rgba(15,23,36,0.04);
       padding: 18px;
       display:flex;
       flex-direction:column;
