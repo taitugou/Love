@@ -111,8 +111,8 @@
   .time-label { font-size:1.2em; font-weight:600; color:var(--color-white); text-shadow:0 0 10px var(--color-cyan); margin-right:0.5em; }
   .love-time .time-line:first-child .time-label { font-size:2em; color:var(--color-pink); text-shadow:0 0 15px var(--color-pink); margin-right:0; }
 
-  .time-value { font-weight:800; color:var(--color-cyan); text-shadow:0 0 15px var(--color-cyan); }
-  .days-value { font-size:3.2em; } .hours-value { font-size:1.6em; } .minutes-value { font-size:1.6em; } .seconds-value { font-size:1.2em; } .milliseconds-value { font-size:0.9em; }
+  .time-value { font-weight:800; color:var(--color-accent); text-shadow:0 0 22px var(--color-glow); }
+  .days-value { font-size:5.2em; } .hours-value { font-size:2.6em; } .minutes-value { font-size:2.6em; } .seconds-value { font-size:2.2em; }
 
   @keyframes floatText { 0%{transform:translateY(0);} 40%{transform:translateY(-6px);} 100%{transform:translateY(0);} }
 
@@ -179,7 +179,7 @@
     .main-content { width:95%; }
     .love-saying { font-size:2.6em; }
     .love-time { padding:1em 0.5em; }
-    .days-value { font-size:2.6em; } .hours-value { font-size:1.4em; } .minutes-value { font-size:1.4em; } .seconds-value { font-size:1.1em; } .milliseconds-value { font-size:1em; }
+    .days-value { font-size:3.8em; } .hours-value { font-size:1.9em; } .minutes-value { font-size:1.9em; } .seconds-value { font-size:1.8em; }
     .heart { width:120px; height:108px; } .heart-pulse { width:150px; height:150px; }
     .fullscreen-effect .effect-text { font-size:3em; }
     .floating-button { font-size:1.1em; padding:10px 20px; bottom:20px; }
@@ -188,7 +188,7 @@
   @media (max-width: 480px) {
     .love-saying { font-size:2em; }
     /* 更紧凑的计时显示，隐藏毫秒以节能 */
-    .days-value { font-size:2.2em; } .hours-value { font-size:1.3em; } .minutes-value { font-size:1.3em; } .seconds-value { font-size:1.1em; } .milliseconds-value { display:none; }
+    .days-value { font-size:2.8em; } .hours-value { font-size:1.5em; } .minutes-value { font-size:1.5em; } .seconds-value { font-size:1.4em; }
     .time-label { font-size:1em; }
     .heart { width:100px; height:90px; } .heart-pulse { width:130px; height:130px; }
     .fullscreen-effect .effect-text { font-size:2em; }
@@ -198,7 +198,8 @@
   /* 超紧凑：适配智能手表或非常小的屏幕 */
   @media (max-width: 320px) {
     .fullscreen-effect .effect-text { font-size:1.2em; max-width:95%; }
-    .heart { width:70px; height:60px; } .heart-pulse { width:96px; height:96px; } .love-saying { font-size:1.4em; }
+    .heart { width:66px; height:56px; } .heart-pulse { width:88px; height:88px; } .love-saying { font-size:1.3em; }
+    .days-value { font-size:2.4em; } .hours-value { font-size:1.3em; } .minutes-value { font-size:1.3em; } .seconds-value { font-size:1.2em; }
     .floating-button { font-size:0.78em; padding:4px 8px; bottom:6px; }
   }
 
@@ -268,10 +269,7 @@
         <span class="time-value seconds-value" id="seconds">00</span>
         <span class="time-label">秒</span>
       </div>
-      <div class="time-line">
-        <span class="time-value milliseconds-value" id="milliseconds">000</span>
-        <span class="time-label">毫秒</span>
-      </div>
+      <!-- 毫秒已移除以节省显示与能耗 -->
     </div>
 
     <div class="heart-container" id="heartContainer">
@@ -316,7 +314,7 @@
   const CONFIG = { startDate: "2025-10-18T13:28:07" };
 
   const dailyMessages = [
-    "周一：没想到每天不一样吧，新的一周开始了，更加想你了💕",
+    "周一：新的一周开始了，更加想你了💕",
     "周二：距离周末又近了一天，期待见到你✨",
     "周三：一周过半，思念却越来越浓🌹",
     "周四：快要见到你了，心情开始激动🌟",
@@ -339,11 +337,10 @@
     fullscreenEffect: document.getElementById('fullscreenEffect'),
     effectText: document.getElementById('effectText'),
     loveSaying: document.getElementById('loveSaying'),
-    days: document.getElementById('days'),
-    hours: document.getElementById('hours'),
-    minutes: document.getElementById('minutes'),
-    seconds: document.getElementById('seconds'),
-    milliseconds: document.getElementById('milliseconds'),
+  days: document.getElementById('days'),
+  hours: document.getElementById('hours'),
+  minutes: document.getElementById('minutes'),
+  seconds: document.getElementById('seconds'),
     heartContainer: document.getElementById('heartContainer'),
     noteButton: document.getElementById('noteButton'),
     noteModal: document.getElementById('noteModal'),
@@ -542,15 +539,15 @@ elements.drawButton.addEventListener('click', () => {
     const isTiny = window.innerWidth <= 320;
     if (isTiny) {
       function updateOnceASecond() {
-        const now = Date.now(); const diff = now - startTime;
-        const days = Math.floor(diff / (1000*60*60*24));
-        const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
-        const minutes = Math.floor((diff % (1000*60*60)) / (1000*60));
-        const seconds = Math.floor((diff % (1000*60)) / 1000);
-        elements.days.textContent = days;
-        elements.hours.textContent = String(hours).padStart(2,'0');
-        elements.minutes.textContent = String(minutes).padStart(2,'0');
-        elements.seconds.textContent = String(seconds).padStart(2,'0');
+      const now = Date.now(); const diff = now - startTime;
+      const days = Math.floor(diff / (1000*60*60*24));
+      const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+      const minutes = Math.floor((diff % (1000*60*60)) / (1000*60));
+      const seconds = Math.floor((diff % (1000*60)) / 1000);
+      elements.days.textContent = days;
+      elements.hours.textContent = String(hours).padStart(2,'0');
+      elements.minutes.textContent = String(minutes).padStart(2,'0');
+      elements.seconds.textContent = String(seconds).padStart(2,'0');
       }
       updateOnceASecond();
       setInterval(updateOnceASecond, 1000);
