@@ -6,15 +6,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <style>
   :root {
-    --color-main: #4A0A8A;
-    --color-main-grad: #6A0DAD;
-    --color-deep-purple: #2D0047;
-    --color-dark-blue: #0A0028;
-    --color-cyan: #00ffff;
+    /* 高级紫色主题（无渐变） */
+    --color-main: #2b0b46; /* 深紫 */
+    --color-accent: #8f3fbf; /* 亮紫 */
+    --color-glow: #b77fff; /* 发光色 */
+    --color-deep: #15031a; /* 极深紫/接近黑 */
     --color-white: #ffffff;
-    --color-pink: #ff6b9d;
-    --color-shadow1: #00ffff;
-    --color-shadow2: #6a0dad;
+    --color-pink: #ff6b9d; /* 保留部分点缀 */
+    --color-shadow1: rgba(183,127,255,0.8);
+    --color-shadow2: rgba(143,63,191,0.65);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -25,7 +25,8 @@
     width: 100vw;
     height: auto;
     overflow-y: auto;
-    background: linear-gradient(135deg, var(--color-dark-blue) 0%, var(--color-deep-purple) 40%, var(--color-main) 80%, var(--color-main-grad) 100%);
+    /* 单色高级紫背景以保证高质感和一致性（移除渐变） */
+    background: var(--color-main);
     font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "STKaiti", "Segoe UI", Arial, cursive, sans-serif;
     color: var(--color-white);
   }
@@ -34,51 +35,48 @@
 
   .floating-button {
     position: fixed;
-    padding: 12px 24px;
-    font-size: 1.2em;
-    font-weight: bold;
-    color: white;
+    padding: 10px 16px;
+    font-size: 1.05em;
+    font-weight: 700;
+    color: var(--color-white);
     border: none;
-    border-radius: 50px;
+    border-radius: 999px;
     cursor: pointer;
-    z-index: 10;
-    transition: all 0.3s;
+    z-index: 12;
+    transition: transform .22s ease, box-shadow .22s ease, opacity .22s ease;
+    will-change: transform, box-shadow, opacity;
+    backdrop-filter: blur(6px);
   }
 
   .draw-button {
-  left: 50%;
-  bottom: 90px;
-  transform: translateX(-50%);
-  background: linear-gradient(90deg, rgba(255,107,157,0.8), rgba(0,255,255,0.8));
-  box-shadow: 0 0 20px rgba(255,255,255,0.4);
-}
+    left: 50%;
+    bottom: 88px;
+    transform: translateX(-50%);
+    background: linear-gradient(90deg, var(--color-accent), var(--color-accent)); /* kept simple for compatibility */
+    background-color: var(--color-accent);
+    box-shadow: 0 6px 30px var(--color-shadow1);
+    color: var(--color-white);
+  }
+  .draw-button:hover { transform: translateX(-50%) scale(1.06); box-shadow: 0 8px 40px var(--color-shadow1); }
 
-.draw-button:hover {
-  background: linear-gradient(90deg, rgba(255,107,157,1), rgba(0,255,255,1));
-  transform: translateX(-50%) scale(1.05);
-  box-shadow: 0 0 30px rgba(255,255,255,0.6);
-}
+  .note-button { right: 20px; bottom: 20px; background: rgba(143,63,191,0.18); box-shadow: 0 6px 28px rgba(143,63,191,0.25); }
+  .note-button:hover { transform: scale(1.05); box-shadow: 0 10px 38px var(--color-shadow2); }
 
-  .note-button { right: 30px; bottom: 30px; background: rgba(255,107,157,0.8); box-shadow: 0 0 20px rgba(255,107,157,0.5); }
-  .note-button:hover { background: rgba(255,107,157,1); transform: scale(1.05); box-shadow: 0 0 30px rgba(255,107,157,0.7); }
-
-  .diary-button { left: 30px; bottom: 30px; background: rgba(0,255,255,0.8); box-shadow: 0 0 20px rgba(0,255,255,0.5); }
-  .diary-button:hover { background: rgba(0,255,255,1); transform: scale(1.05); box-shadow: 0 0 30px rgba(0,255,255,0.7); }
+  .diary-button { left: 20px; bottom: 20px; background: rgba(183,127,255,0.12); box-shadow: 0 6px 28px rgba(183,127,255,0.22); }
+  .diary-button:hover { transform: scale(1.05); box-shadow: 0 10px 38px var(--color-shadow1); }
 
   #bgCanvas, #particleCanvas {
     position: fixed; left: 0; top: 0; z-index: 0;
-    width: 100vw !important; height: 100vh !important; display: block;
+    width: 100vw !important; height: 100vh !important; display: block; pointer-events: none;
   }
 
   .stars-background {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+    /* 使用淡紫色星点，性能友好且符合单色主题 */
     background:
-      radial-gradient(2px 2px at 20px 30px, #eee, transparent),
-      radial-gradient(2px 2px at 40px 70px, #fff, transparent),
-      radial-gradient(1px 1px at 90px 40px, #fff, transparent),
-      radial-gradient(1px 1px at 130px 80px, #fff, transparent),
-      radial-gradient(2px 2px at 160px 30px, #ddd, transparent);
-    background-repeat: repeat; background-size: 200px 100px; opacity: 0.3;
+      radial-gradient(2px 2px at 20px 30px, rgba(183,127,255,0.9), transparent),
+      radial-gradient(2px 2px at 40px 70px, rgba(143,63,191,0.85), transparent);
+    background-repeat: repeat; background-size: 220px 110px; opacity: 0.18;
     animation: twinkle 4s infinite alternate;
   }
   @keyframes twinkle { 0%,100% { opacity: 0.2; } 50% { opacity: 0.4; } }
@@ -88,43 +86,42 @@
   }
 
   .love-saying {
-    font-size: 4.5em; font-weight: bold; color: var(--color-pink); letter-spacing: .16em;
-    padding-bottom: .15em; text-shadow: 0 0 30px var(--color-shadow1), 0 0 25px var(--color-shadow2), 2px 3px 2px #0005;
-    animation: romancePulse 2.8s infinite cubic-bezier(.77,0,.17,1);
-    background: linear-gradient(90deg, var(--color-pink) 10%, var(--color-cyan) 90%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    margin-bottom: 1em; cursor: pointer; transition: all 0.3s;
+    font-size: 3.2em; font-weight: 800; color: var(--color-accent); letter-spacing: .08em;
+    padding-bottom: .08em; text-shadow: 0 0 24px var(--color-glow), 0 0 12px rgba(0,0,0,0.5);
+    animation: romancePulse 1.8s infinite cubic-bezier(.6,0,.4,1);
+    margin-bottom: 0.6em; cursor: pointer; transition: transform .22s ease;
+    -webkit-text-fill-color: unset;
   }
   .love-saying:hover { transform: scale(1.05); }
   @keyframes romancePulse { 0% { transform:translateY(0) scale(1);} 45%{ transform:translateY(-12px) scale(1.12);} 100%{transform:translateY(0) scale(1);} }
 
   .love-time {
-    padding: 1.5em 0.8em; border-radius: 20px; background: rgba(255,255,255,0.08);
-    box-shadow: 0 0 40px 6px rgba(0,255,255,0.25) inset, 0 0 60px 4px rgba(255,107,157,0.3);
-    mix-blend-mode: normal; transition: all .3s; animation: floatText 4.8s ease-in-out infinite alternate;
+    padding: 0.9em 0.6em; border-radius: 14px; background: rgba(0,0,0,0.08);
+    box-shadow: 0 6px 28px rgba(20,0,30,0.6) inset;
+    mix-blend-mode: normal; transition: transform .22s ease; animation: floatText 3.6s ease-in-out infinite alternate;
     display: block; position: relative; overflow: hidden;
-    -webkit-backdrop-filter: blur(15px); backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
     background-color: rgba(255,255,255,0.02);
-    border: 3px solid rgba(255,255,255,0.2); width: 100%; box-sizing: border-box; margin-bottom: 2em; pointer-events: none;
+    border: 1px solid rgba(255,255,255,0.06); width: 100%; box-sizing: border-box; margin-bottom: 1.1em; pointer-events: none;
   }
 
-  .time-line { display:flex; justify-content:center; align-items:center; margin:0.5em 0; line-height:1.2; }
+  .time-line { display:flex; justify-content:center; align-items:center; margin:0.35em 0; line-height:1.1; }
   .time-line.spacing-small { height: 0.5em; }
 
   .time-label { font-size:1.2em; font-weight:600; color:var(--color-white); text-shadow:0 0 10px var(--color-cyan); margin-right:0.5em; }
   .love-time .time-line:first-child .time-label { font-size:2em; color:var(--color-pink); text-shadow:0 0 15px var(--color-pink); margin-right:0; }
 
   .time-value { font-weight:800; color:var(--color-cyan); text-shadow:0 0 15px var(--color-cyan); }
-  .days-value { font-size:4.5em; } .hours-value { font-size:3em; } .minutes-value { font-size:3em; } .seconds-value { font-size:2em; } .milliseconds-value { font-size:1.5em; }
+  .days-value { font-size:3.2em; } .hours-value { font-size:1.6em; } .minutes-value { font-size:1.6em; } .seconds-value { font-size:1.2em; } .milliseconds-value { font-size:0.9em; }
 
   @keyframes floatText { 0%{transform:translateY(0);} 40%{transform:translateY(-6px);} 100%{transform:translateY(0);} }
 
-  .heart-container { position:relative; width:100%; height:180px; display:flex; justify-content:center; align-items:center; margin-top:0.5em; cursor:pointer; }
-  .heart { position:absolute; width:140px; height:126px; animation:heartbeat 1.2s infinite ease-in-out; filter: drop-shadow(0 0 25px rgba(255,107,157,0.9)); z-index:2; transform-origin:center; transition:all 0.3s; }
+  .heart-container { position:relative; width:100%; height:150px; display:flex; justify-content:center; align-items:center; margin-top:0.25em; cursor:pointer; }
+  .heart { position:absolute; width:120px; height:108px; animation:heartbeat 0.9s infinite cubic-bezier(.2,.8,.2,1); filter: drop-shadow(0 0 30px var(--color-glow)); z-index:2; transform-origin:center; transition:transform .18s ease; }
   .heart:hover { transform: scale(1.1); }
   .heart svg { width:100%; height:100%; fill:#ff6b9d; filter: drop-shadow(0 0 15px rgba(255,107,157,0.8)); }
   @keyframes heartbeat { 0%{transform:scale(1);}5%{transform:scale(1.1);}10%{transform:scale(1.15);}15%{transform:scale(1.2);}50%{transform:scale(1);}100%{transform:scale(1);} }
-  .heart-pulse { position:absolute; width:180px; height:180px; border-radius:50%; background:rgba(255,107,157,0.3); animation:pulse 1.2s infinite; z-index:1; transform-origin:center; }
+  .heart-pulse { position:absolute; width:180px; height:180px; border-radius:50%; background:radial-gradient(circle at 40% 30%, rgba(183,127,255,0.25), rgba(143,63,191,0.06)); animation:pulse 1.2s infinite; z-index:1; transform-origin:center; }
   @keyframes pulse { 0%{transform:scale(0.8);opacity:0.7;}50%{transform:scale(1.2);opacity:0.3;}100%{transform:scale(1.4);opacity:0;} }
 
   .diary-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:1000; opacity:0; pointer-events:none; transition:opacity 0.3s; }
@@ -150,9 +147,9 @@
   .note-modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:1000; opacity:0; pointer-events:none; transition:opacity 0.3s; }
   .note-modal.active { opacity:1; pointer-events:auto; }
   .note-content {
-    background: rgba(30,0,50,0.95); border-radius:20px; padding:30px; width:90%; max-width:600px; max-height:80vh; overflow-y:auto;
-    box-shadow:0 0 50px rgba(255,107,157,0.5); border:2px solid rgba(255,255,255,0.2);
-    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); background-color: rgba(30,0,50,0.95);
+    background: linear-gradient(0deg, rgba(20,6,30,0.94), rgba(20,6,30,0.94)); border-radius:14px; padding:20px; width:92%; max-width:520px; max-height:78vh; overflow-y:auto;
+    box-shadow:0 10px 60px rgba(80,30,120,0.28); border:1px solid rgba(255,255,255,0.04);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   }
   .note-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:10px; }
   .note-title { font-size:1.8em; color:var(--color-pink); margin:0; }
@@ -168,9 +165,9 @@
   .note-date { font-weight:bold; color:var(--color-cyan); margin-bottom:5px; }
   .note-text { color:white; }
 
-  .fullscreen-effect { position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:100; opacity:0; transition:opacity 0.3s; }
+  .fullscreen-effect { position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:100; opacity:0; transition:opacity 0.22s; }
   .fullscreen-effect.active { opacity:1; }
-  .fullscreen-effect .effect-bg { position:absolute; top:0; left:0; width:100%; height:100%; background: radial-gradient(circle, rgba(255,107,157,0.7) 0%, rgba(106,13,173,0.8) 100%); animation:effectBgPulse 3s ease-out forwards; }
+  .fullscreen-effect .effect-bg { position:absolute; top:0; left:0; width:100%; height:100%; background: radial-gradient(circle, rgba(183,127,255,0.85) 0%, rgba(43,11,70,0.9) 100%); animation:effectBgPulse 2.6s ease-out forwards; }
   @keyframes effectBgPulse { 0%{transform:scale(0);opacity:0;}20%{transform:scale(1);opacity:1;}80%{transform:scale(1);opacity:1;}100%{transform:scale(1.2);opacity:0;} }
   .fullscreen-effect .effect-text { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:2em; max-width:90%; color:white; text-shadow:0 0 40px rgba(255,255,255,0.9); animation:effectTextPulse 3s ease-out forwards; z-index:101; text-align:center; font-weight:bold; white-space:normal; word-break:break-word; line-height:1.4; }
   @keyframes effectTextPulse { 0%{transform:translate(-50%,-50%) scale(0);opacity:0;}30%{transform:translate(-50%,-50%) scale(1.2);opacity:1;}50%{transform:translate(-50%,-50%) scale(1);opacity:1;}70%{transform:translate(-50%,-50%) scale(1.1);opacity:1;}100%{transform:translate(-50%,-50%) scale(1.2);opacity:0;} }
@@ -180,26 +177,29 @@
 
   @media (max-width: 768px) {
     .main-content { width:95%; }
-    .love-saying { font-size:3em; }
+    .love-saying { font-size:2.6em; }
     .love-time { padding:1em 0.5em; }
-    .days-value { font-size:2.8em; } .hours-value { font-size:2.4em; } .minutes-value { font-size:2em; } .seconds-value { font-size:1.6em; } .milliseconds-value { font-size:1.2em; }
+    .days-value { font-size:2.6em; } .hours-value { font-size:1.4em; } .minutes-value { font-size:1.4em; } .seconds-value { font-size:1.1em; } .milliseconds-value { font-size:1em; }
     .heart { width:120px; height:108px; } .heart-pulse { width:150px; height:150px; }
     .fullscreen-effect .effect-text { font-size:3em; }
     .floating-button { font-size:1.1em; padding:10px 20px; bottom:20px; }
   }
+  /* 极小屏 / 手表 320px 及以下的体验优化 */
   @media (max-width: 480px) {
     .love-saying { font-size:2em; }
-    .days-value { font-size:2.2em; } .hours-value { font-size:1.9em; } .minutes-value { font-size:1.6em; } .seconds-value { font-size:1.3em; } .milliseconds-value { font-size:1em; }
+    /* 更紧凑的计时显示，隐藏毫秒以节能 */
+    .days-value { font-size:2.2em; } .hours-value { font-size:1.3em; } .minutes-value { font-size:1.3em; } .seconds-value { font-size:1.1em; } .milliseconds-value { display:none; }
     .time-label { font-size:1em; }
     .heart { width:100px; height:90px; } .heart-pulse { width:130px; height:130px; }
     .fullscreen-effect .effect-text { font-size:2em; }
     .floating-button { font-size:0.9em; padding:6px 12px; bottom:10px; }
     .note-content { padding:20px; }
   }
-  @media (max-width: 360px) {
+  /* 超紧凑：适配智能手表或非常小的屏幕 */
+  @media (max-width: 320px) {
     .fullscreen-effect .effect-text { font-size:1.2em; max-width:95%; }
-    .heart { width:80px; height:72px; } .heart-pulse { width:110px; height:110px; } .love-saying { font-size:1.8em; }
-    .floating-button { font-size:0.8em; padding:5px 10px; bottom:8px; }
+    .heart { width:70px; height:60px; } .heart-pulse { width:96px; height:96px; } .love-saying { font-size:1.4em; }
+    .floating-button { font-size:0.78em; padding:4px 8px; bottom:6px; }
   }
 
   ::-webkit-scrollbar { display: none; }
@@ -385,10 +385,18 @@
     resizeBgCanvas();
     window.addEventListener('resize', resizeBgCanvas);
     function drawBackground() {
+      // 使用单色背景（从 CSS 主题读取），避免频繁复杂绘制
       const w = elements.bgCanvas.width, h = elements.bgCanvas.height;
-      const gradient = bgCtx.createLinearGradient(0,0,w,h);
-      gradient.addColorStop(0,"#0A0028"); gradient.addColorStop(0.3,"#2D0047"); gradient.addColorStop(0.7,"#4A0A8A"); gradient.addColorStop(1,"#6A0DAD");
-      bgCtx.fillStyle = gradient; bgCtx.fillRect(0,0,w,h);
+      const rootColor = getComputedStyle(document.documentElement).getPropertyValue('--color-main') || '#2b0b46';
+      bgCtx.fillStyle = rootColor.trim();
+      bgCtx.fillRect(0,0,w,h);
+      // very cheap subtle vignette for depth on larger screens
+      if (w > 420) {
+        const g = bgCtx.createRadialGradient(w/2, h/2, Math.min(w,h)*0.18, w/2, h/2, Math.max(w,h));
+          g.addColorStop(0, 'rgba(255,255,255,0.02)');
+          g.addColorStop(1, 'rgba(0,0,0,0.15)');
+        bgCtx.fillStyle = g; bgCtx.fillRect(0,0,w,h);
+      }
       requestAnimationFrame(drawBackground);
     }
     drawBackground();
@@ -408,24 +416,63 @@
     }
     resizeParticleCanvas();
     window.addEventListener('resize', resizeParticleCanvas);
-    function drawParticles() {
-      pCtx.clearRect(0,0,window.innerWidth,window.innerHeight);
-      const centerX = window.innerWidth/2;
-      const centerY = window.innerHeight/2 - 45;
-      const size = Math.min(window.innerWidth, window.innerHeight) * 0.03;
+    // For very small screens (e.g. watches) we render a lightweight pulsing heart and throttle frames.
+    let smallLoopId = null;
+    let rafId = null;
+    function clearLoops() {
+      if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+      if (smallLoopId) { clearInterval(smallLoopId); smallLoopId = null; }
+    }
+
+    function drawHeartShape(centerX, centerY, size) {
       pCtx.beginPath();
-      for (let t=0; t<=2*Math.PI; t+=0.01) {
+      for (let t=0; t<=2*Math.PI; t+=0.02) {
         const x = 16 * Math.pow(Math.sin(t),3);
         const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
         pCtx.lineTo(centerX + x*size, centerY + y*size);
       }
       pCtx.closePath();
-      pCtx.strokeStyle = 'rgba(255,107,157,0.3)';
-      pCtx.lineWidth = 2;
+      pCtx.strokeStyle = 'rgba(183,127,255,0.24)';
+      pCtx.lineWidth = Math.max(1, Math.min(3, size*0.12));
       pCtx.stroke();
-      requestAnimationFrame(drawParticles);
     }
+
+    function drawParticles() {
+      clearLoops();
+      const w = window.innerWidth, h = window.innerHeight;
+      const isTiny = w <= 320;
+      const centerX = w/2;
+      const centerY = h/2 - 36;
+      const size = Math.min(w, h) * 0.03;
+
+      if (isTiny) {
+        // throttle: 24fps via interval to reduce CPU on tiny devices
+        smallLoopId = setInterval(()=>{
+          pCtx.clearRect(0,0,w,h);
+          // subtle glow
+          pCtx.fillStyle = 'rgba(0,0,0,0)';
+          pCtx.fillRect(0,0,w,h);
+          drawHeartShape(centerX, centerY, size*0.9);
+          // add a fast radial pulse overlay
+          const t = Date.now()%900/900;
+          pCtx.beginPath();
+          pCtx.arc(centerX, centerY, 10 + 30*t, 0, Math.PI*2);
+          pCtx.fillStyle = `rgba(183,127,255,${0.06 + 0.14*(1-Math.abs(0.5-t)*2)})`;
+          pCtx.fill();
+        }, 1000/24);
+      } else {
+        function loop() {
+          pCtx.clearRect(0,0,w,h);
+          drawHeartShape(centerX, centerY, size*1.0);
+          rafId = requestAnimationFrame(loop);
+        }
+        rafId = requestAnimationFrame(loop);
+      }
+    }
+
+    // initialize loop
     drawParticles();
+    window.addEventListener('resize', ()=>{ clearLoops(); resizeParticleCanvas(); drawParticles(); });
   }
 
   function setupEventListeners() {
@@ -491,21 +538,39 @@ elements.drawButton.addEventListener('click', () => {
 
   function startTimer() {
     const startTime = new Date(CONFIG.startDate).getTime();
-    function updateTimer() {
-      const now = Date.now(); const diff = now - startTime;
-      const days = Math.floor(diff / (1000*60*60*24));
-      const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
-      const minutes = Math.floor((diff % (1000*60*60)) / (1000*60));
-      const seconds = Math.floor((diff % (1000*60)) / 1000);
-      const milliseconds = diff % 1000;
-      elements.days.textContent = days;
-      elements.hours.textContent = String(hours).padStart(2,'0');
-      elements.minutes.textContent = String(minutes).padStart(2,'0');
-      elements.seconds.textContent = String(seconds).padStart(2,'0');
-      elements.milliseconds.textContent = String(milliseconds).padStart(3,'0');
-      requestAnimationFrame(updateTimer);
+    // On very small screens we don't need millisecond updates (save CPU/battery), update once per second.
+    const isTiny = window.innerWidth <= 320;
+    if (isTiny) {
+      function updateOnceASecond() {
+        const now = Date.now(); const diff = now - startTime;
+        const days = Math.floor(diff / (1000*60*60*24));
+        const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+        const minutes = Math.floor((diff % (1000*60*60)) / (1000*60));
+        const seconds = Math.floor((diff % (1000*60)) / 1000);
+        elements.days.textContent = days;
+        elements.hours.textContent = String(hours).padStart(2,'0');
+        elements.minutes.textContent = String(minutes).padStart(2,'0');
+        elements.seconds.textContent = String(seconds).padStart(2,'0');
+      }
+      updateOnceASecond();
+      setInterval(updateOnceASecond, 1000);
+    } else {
+      function updateTimer() {
+        const now = Date.now(); const diff = now - startTime;
+        const days = Math.floor(diff / (1000*60*60*24));
+        const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+        const minutes = Math.floor((diff % (1000*60*60)) / (1000*60));
+        const seconds = Math.floor((diff % (1000*60)) / 1000);
+        const milliseconds = diff % 1000;
+        elements.days.textContent = days;
+        elements.hours.textContent = String(hours).padStart(2,'0');
+        elements.minutes.textContent = String(minutes).padStart(2,'0');
+        elements.seconds.textContent = String(seconds).padStart(2,'0');
+        elements.milliseconds.textContent = String(milliseconds).padStart(3,'0');
+        requestAnimationFrame(updateTimer);
+      }
+      updateTimer();
     }
-    updateTimer();
   }
 
   function generateAllNotes() {
@@ -692,4 +757,3 @@ elements.drawButton.addEventListener('click', () => {
 </script>
 </body>
 </html>
-
