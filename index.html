@@ -111,8 +111,8 @@
   .time-label { font-size:1.2em; font-weight:600; color:var(--color-white); text-shadow:0 0 10px var(--color-cyan); margin-right:0.5em; }
   .love-time .time-line:first-child .time-label { font-size:2em; color:var(--color-pink); text-shadow:0 0 15px var(--color-pink); margin-right:0; }
 
-  .time-value { font-weight:800; color:var(--color-accent); text-shadow:0 0 22px var(--color-glow); }
-  .days-value { font-size:5.2em; } .hours-value { font-size:2.6em; } .minutes-value { font-size:2.6em; } .seconds-value { font-size:2.2em; }
+  .time-value { font-weight:800; color:var(--color-cyan); text-shadow:0 0 15px var(--color-cyan); }
+  .days-value { font-size:3.2em; } .hours-value { font-size:1.6em; } .minutes-value { font-size:1.6em; } .seconds-value { font-size:1.2em; } .milliseconds-value { font-size:0.9em; }
 
   @keyframes floatText { 0%{transform:translateY(0);} 40%{transform:translateY(-6px);} 100%{transform:translateY(0);} }
 
@@ -179,7 +179,7 @@
     .main-content { width:95%; }
     .love-saying { font-size:2.6em; }
     .love-time { padding:1em 0.5em; }
-    .days-value { font-size:3.8em; } .hours-value { font-size:1.9em; } .minutes-value { font-size:1.9em; } .seconds-value { font-size:1.8em; }
+    .days-value { font-size:2.6em; } .hours-value { font-size:1.4em; } .minutes-value { font-size:1.4em; } .seconds-value { font-size:1.1em; } .milliseconds-value { font-size:1em; }
     .heart { width:120px; height:108px; } .heart-pulse { width:150px; height:150px; }
     .fullscreen-effect .effect-text { font-size:3em; }
     .floating-button { font-size:1.1em; padding:10px 20px; bottom:20px; }
@@ -188,7 +188,7 @@
   @media (max-width: 480px) {
     .love-saying { font-size:2em; }
     /* 更紧凑的计时显示，隐藏毫秒以节能 */
-    .days-value { font-size:2.8em; } .hours-value { font-size:1.5em; } .minutes-value { font-size:1.5em; } .seconds-value { font-size:1.4em; }
+    .days-value { font-size:2.2em; } .hours-value { font-size:1.3em; } .minutes-value { font-size:1.3em; } .seconds-value { font-size:1.1em; } .milliseconds-value { display:none; }
     .time-label { font-size:1em; }
     .heart { width:100px; height:90px; } .heart-pulse { width:130px; height:130px; }
     .fullscreen-effect .effect-text { font-size:2em; }
@@ -198,8 +198,7 @@
   /* 超紧凑：适配智能手表或非常小的屏幕 */
   @media (max-width: 320px) {
     .fullscreen-effect .effect-text { font-size:1.2em; max-width:95%; }
-    .heart { width:66px; height:56px; } .heart-pulse { width:88px; height:88px; } .love-saying { font-size:1.3em; }
-    .days-value { font-size:2.4em; } .hours-value { font-size:1.3em; } .minutes-value { font-size:1.3em; } .seconds-value { font-size:1.2em; }
+    .heart { width:70px; height:60px; } .heart-pulse { width:96px; height:96px; } .love-saying { font-size:1.4em; }
     .floating-button { font-size:0.78em; padding:4px 8px; bottom:6px; }
   }
 
@@ -269,7 +268,10 @@
         <span class="time-value seconds-value" id="seconds">00</span>
         <span class="time-label">秒</span>
       </div>
-      <!-- 毫秒已移除以节省显示与能耗 -->
+      <div class="time-line">
+        <span class="time-value milliseconds-value" id="milliseconds">000</span>
+        <span class="time-label">毫秒</span>
+      </div>
     </div>
 
     <div class="heart-container" id="heartContainer">
@@ -314,7 +316,7 @@
   const CONFIG = { startDate: "2025-10-18T13:28:07" };
 
   const dailyMessages = [
-    "周一：新的一周开始了，更加想你了💕",
+    "周一：没想到每天不一样吧，新的一周开始了，更加想你了💕",
     "周二：距离周末又近了一天，期待见到你✨",
     "周三：一周过半，思念却越来越浓🌹",
     "周四：快要见到你了，心情开始激动🌟",
@@ -337,10 +339,11 @@
     fullscreenEffect: document.getElementById('fullscreenEffect'),
     effectText: document.getElementById('effectText'),
     loveSaying: document.getElementById('loveSaying'),
-  days: document.getElementById('days'),
-  hours: document.getElementById('hours'),
-  minutes: document.getElementById('minutes'),
-  seconds: document.getElementById('seconds'),
+    days: document.getElementById('days'),
+    hours: document.getElementById('hours'),
+    minutes: document.getElementById('minutes'),
+    seconds: document.getElementById('seconds'),
+    milliseconds: document.getElementById('milliseconds'),
     heartContainer: document.getElementById('heartContainer'),
     noteButton: document.getElementById('noteButton'),
     noteModal: document.getElementById('noteModal'),
@@ -382,18 +385,10 @@
     resizeBgCanvas();
     window.addEventListener('resize', resizeBgCanvas);
     function drawBackground() {
-      // 使用单色背景（从 CSS 主题读取），避免频繁复杂绘制
       const w = elements.bgCanvas.width, h = elements.bgCanvas.height;
-      const rootColor = getComputedStyle(document.documentElement).getPropertyValue('--color-main') || '#2b0b46';
-      bgCtx.fillStyle = rootColor.trim();
-      bgCtx.fillRect(0,0,w,h);
-      // very cheap subtle vignette for depth on larger screens
-      if (w > 420) {
-        const g = bgCtx.createRadialGradient(w/2, h/2, Math.min(w,h)*0.18, w/2, h/2, Math.max(w,h));
-          g.addColorStop(0, 'rgba(255,255,255,0.02)');
-          g.addColorStop(1, 'rgba(0,0,0,0.15)');
-        bgCtx.fillStyle = g; bgCtx.fillRect(0,0,w,h);
-      }
+      const gradient = bgCtx.createLinearGradient(0,0,w,h);
+      gradient.addColorStop(0,"#0A0028"); gradient.addColorStop(0.3,"#2D0047"); gradient.addColorStop(0.7,"#4A0A8A"); gradient.addColorStop(1,"#6A0DAD");
+      bgCtx.fillStyle = gradient; bgCtx.fillRect(0,0,w,h);
       requestAnimationFrame(drawBackground);
     }
     drawBackground();
@@ -413,63 +408,24 @@
     }
     resizeParticleCanvas();
     window.addEventListener('resize', resizeParticleCanvas);
-    // For very small screens (e.g. watches) we render a lightweight pulsing heart and throttle frames.
-    let smallLoopId = null;
-    let rafId = null;
-    function clearLoops() {
-      if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
-      if (smallLoopId) { clearInterval(smallLoopId); smallLoopId = null; }
-    }
-
-    function drawHeartShape(centerX, centerY, size) {
+    function drawParticles() {
+      pCtx.clearRect(0,0,window.innerWidth,window.innerHeight);
+      const centerX = window.innerWidth/2;
+      const centerY = window.innerHeight/2 - 45;
+      const size = Math.min(window.innerWidth, window.innerHeight) * 0.03;
       pCtx.beginPath();
-      for (let t=0; t<=2*Math.PI; t+=0.02) {
+      for (let t=0; t<=2*Math.PI; t+=0.01) {
         const x = 16 * Math.pow(Math.sin(t),3);
         const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
         pCtx.lineTo(centerX + x*size, centerY + y*size);
       }
       pCtx.closePath();
-      pCtx.strokeStyle = 'rgba(183,127,255,0.24)';
-      pCtx.lineWidth = Math.max(1, Math.min(3, size*0.12));
+      pCtx.strokeStyle = 'rgba(255,107,157,0.3)';
+      pCtx.lineWidth = 2;
       pCtx.stroke();
+      requestAnimationFrame(drawParticles);
     }
-
-    function drawParticles() {
-      clearLoops();
-      const w = window.innerWidth, h = window.innerHeight;
-      const isTiny = w <= 320;
-      const centerX = w/2;
-      const centerY = h/2 - 36;
-      const size = Math.min(w, h) * 0.03;
-
-      if (isTiny) {
-        // throttle: 24fps via interval to reduce CPU on tiny devices
-        smallLoopId = setInterval(()=>{
-          pCtx.clearRect(0,0,w,h);
-          // subtle glow
-          pCtx.fillStyle = 'rgba(0,0,0,0)';
-          pCtx.fillRect(0,0,w,h);
-          drawHeartShape(centerX, centerY, size*0.9);
-          // add a fast radial pulse overlay
-          const t = Date.now()%900/900;
-          pCtx.beginPath();
-          pCtx.arc(centerX, centerY, 10 + 30*t, 0, Math.PI*2);
-          pCtx.fillStyle = `rgba(183,127,255,${0.06 + 0.14*(1-Math.abs(0.5-t)*2)})`;
-          pCtx.fill();
-        }, 1000/24);
-      } else {
-        function loop() {
-          pCtx.clearRect(0,0,w,h);
-          drawHeartShape(centerX, centerY, size*1.0);
-          rafId = requestAnimationFrame(loop);
-        }
-        rafId = requestAnimationFrame(loop);
-      }
-    }
-
-    // initialize loop
     drawParticles();
-    window.addEventListener('resize', ()=>{ clearLoops(); resizeParticleCanvas(); drawParticles(); });
   }
 
   function setupEventListeners() {
@@ -535,39 +491,21 @@ elements.drawButton.addEventListener('click', () => {
 
   function startTimer() {
     const startTime = new Date(CONFIG.startDate).getTime();
-    // On very small screens we don't need millisecond updates (save CPU/battery), update once per second.
-    const isTiny = window.innerWidth <= 320;
-    if (isTiny) {
-      function updateOnceASecond() {
+    function updateTimer() {
       const now = Date.now(); const diff = now - startTime;
       const days = Math.floor(diff / (1000*60*60*24));
       const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
       const minutes = Math.floor((diff % (1000*60*60)) / (1000*60));
       const seconds = Math.floor((diff % (1000*60)) / 1000);
+      const milliseconds = diff % 1000;
       elements.days.textContent = days;
       elements.hours.textContent = String(hours).padStart(2,'0');
       elements.minutes.textContent = String(minutes).padStart(2,'0');
       elements.seconds.textContent = String(seconds).padStart(2,'0');
-      }
-      updateOnceASecond();
-      setInterval(updateOnceASecond, 1000);
-    } else {
-      function updateTimer() {
-        const now = Date.now(); const diff = now - startTime;
-        const days = Math.floor(diff / (1000*60*60*24));
-        const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
-        const minutes = Math.floor((diff % (1000*60*60)) / (1000*60));
-        const seconds = Math.floor((diff % (1000*60)) / 1000);
-        const milliseconds = diff % 1000;
-        elements.days.textContent = days;
-        elements.hours.textContent = String(hours).padStart(2,'0');
-        elements.minutes.textContent = String(minutes).padStart(2,'0');
-        elements.seconds.textContent = String(seconds).padStart(2,'0');
-        elements.milliseconds.textContent = String(milliseconds).padStart(3,'0');
-        requestAnimationFrame(updateTimer);
-      }
-      updateTimer();
+      elements.milliseconds.textContent = String(milliseconds).padStart(3,'0');
+      requestAnimationFrame(updateTimer);
     }
+    updateTimer();
   }
 
   function generateAllNotes() {
