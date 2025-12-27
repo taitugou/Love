@@ -6,15 +6,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <style>
   :root {
-    /* 高级紫色主题（无渐变） */
-    --color-main: #2b0b46; /* 深紫 */
-    --color-accent: #8f3fbf; /* 亮紫 */
-    --color-glow: #b77fff; /* 发光色 */
-    --color-deep: #15031a; /* 极深紫/接近黑 */
+    /* 高级淡紫色（加深版）：保留柔和感但增加饱和与对比以显高级） */
+    --color-main: #dcc6f8; /* 比之前更深的薰衣草 */
+    --color-accent: #a57bff; /* 更饱和的主色用于按钮和重点 */
+    --color-glow: #b993ff; /* 温和发光色，偏亮用于光晕 */
+    --color-deep: #48284d; /* 更深的紫色作为对比色 */
     --color-white: #ffffff;
-    --color-pink: #ff6b9d; /* 保留部分点缀 */
-    --color-shadow1: rgba(183,127,255,0.8);
-    --color-shadow2: rgba(143,63,191,0.65);
+    --color-pink: #ff7fb3; /* 深一点的点缀粉 */
+    --color-shadow1: rgba(165,123,255,0.9);
+    --color-shadow2: rgba(149,103,238,0.75);
+    /* 文字色彩：主文本与弱化文本、青色强调 */
+    --color-text: #3b233f; /* 主文本：深紫，增强可读性 */
+    --color-text-muted: rgba(72,40,77,0.72);
+    --color-cyan: #9feaff; /* 时间/标签等强调色 */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -28,7 +32,7 @@
     /* 单色高级紫背景以保证高质感和一致性（移除渐变） */
     background: var(--color-main);
     font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "STKaiti", "Segoe UI", Arial, cursive, sans-serif;
-    color: var(--color-white);
+    color: var(--color-text);
   }
 
   body { position: relative; overflow-y: auto; overscroll-behavior: none; }
@@ -59,11 +63,11 @@
   }
   .draw-button:hover { transform: translateX(-50%) scale(1.06); box-shadow: 0 8px 40px var(--color-shadow1); }
 
-  .note-button { right: 20px; bottom: 20px; background: rgba(143,63,191,0.18); box-shadow: 0 6px 28px rgba(143,63,191,0.25); }
-  .note-button:hover { transform: scale(1.05); box-shadow: 0 10px 38px var(--color-shadow2); }
+  .note-button { right: 20px; bottom: 20px; background: rgba(165,123,255,0.18); box-shadow: 0 6px 28px rgba(149,103,238,0.28); }
+  .note-button:hover { transform: scale(1.05); box-shadow: 0 10px 38px rgba(149,103,238,0.38); }
 
-  .diary-button { left: 20px; bottom: 20px; background: rgba(183,127,255,0.12); box-shadow: 0 6px 28px rgba(183,127,255,0.22); }
-  .diary-button:hover { transform: scale(1.05); box-shadow: 0 10px 38px var(--color-shadow1); }
+  .diary-button { left: 20px; bottom: 20px; background: rgba(165,123,255,0.16); box-shadow: 0 6px 28px rgba(165,123,255,0.22); }
+  .diary-button:hover { transform: scale(1.05); box-shadow: 0 10px 38px rgba(165,123,255,0.34); }
 
   #bgCanvas, #particleCanvas {
     position: fixed; left: 0; top: 0; z-index: 0;
@@ -74,9 +78,9 @@
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
     /* 使用淡紫色星点，性能友好且符合单色主题 */
     background:
-      radial-gradient(2px 2px at 20px 30px, rgba(183,127,255,0.9), transparent),
-      radial-gradient(2px 2px at 40px 70px, rgba(143,63,191,0.85), transparent);
-    background-repeat: repeat; background-size: 220px 110px; opacity: 0.18;
+      radial-gradient(2px 2px at 20px 30px, rgba(165,123,255,0.95), transparent),
+      radial-gradient(2px 2px at 40px 70px, rgba(149,103,238,0.9), transparent);
+    background-repeat: repeat; background-size: 200px 100px; opacity: 0.22;
     animation: twinkle 4s infinite alternate;
   }
   @keyframes twinkle { 0%,100% { opacity: 0.2; } 50% { opacity: 0.4; } }
@@ -108,10 +112,10 @@
   .time-line { display:flex; justify-content:center; align-items:center; margin:0.35em 0; line-height:1.1; }
   .time-line.spacing-small { height: 0.5em; }
 
-  .time-label { font-size:1.2em; font-weight:600; color:var(--color-white); text-shadow:0 0 10px var(--color-cyan); margin-right:0.5em; }
+  .time-label { font-size:1.2em; font-weight:600; color:var(--color-deep); text-shadow:0 0 8px rgba(0,0,0,0.04); margin-right:0.5em; }
   .love-time .time-line:first-child .time-label { font-size:2em; color:var(--color-pink); text-shadow:0 0 15px var(--color-pink); margin-right:0; }
 
-  .time-value { font-weight:800; color:var(--color-cyan); text-shadow:0 0 15px var(--color-cyan); }
+  .time-value { font-weight:800; color:var(--color-deep); text-shadow:0 1px 0 rgba(255,255,255,0.04); }
   .days-value { font-size:3.2em; } .hours-value { font-size:1.6em; } .minutes-value { font-size:1.6em; } .seconds-value { font-size:1.2em; } .milliseconds-value { font-size:0.9em; }
 
   @keyframes floatText { 0%{transform:translateY(0);} 40%{transform:translateY(-6px);} 100%{transform:translateY(0);} }
@@ -119,9 +123,9 @@
   .heart-container { position:relative; width:100%; height:150px; display:flex; justify-content:center; align-items:center; margin-top:0.25em; cursor:pointer; }
   .heart { position:absolute; width:120px; height:108px; animation:heartbeat 0.9s infinite cubic-bezier(.2,.8,.2,1); filter: drop-shadow(0 0 30px var(--color-glow)); z-index:2; transform-origin:center; transition:transform .18s ease; }
   .heart:hover { transform: scale(1.1); }
-  .heart svg { width:100%; height:100%; fill:#ff6b9d; filter: drop-shadow(0 0 15px rgba(255,107,157,0.8)); }
+  .heart svg { width:100%; height:100%; fill: var(--color-pink); filter: drop-shadow(0 0 18px rgba(255,127,179,0.9)); }
   @keyframes heartbeat { 0%{transform:scale(1);}5%{transform:scale(1.1);}10%{transform:scale(1.15);}15%{transform:scale(1.2);}50%{transform:scale(1);}100%{transform:scale(1);} }
-  .heart-pulse { position:absolute; width:180px; height:180px; border-radius:50%; background:radial-gradient(circle at 40% 30%, rgba(183,127,255,0.25), rgba(143,63,191,0.06)); animation:pulse 1.2s infinite; z-index:1; transform-origin:center; }
+  .heart-pulse { position:absolute; width:180px; height:180px; border-radius:50%; background:radial-gradient(circle at 40% 30%, rgba(165,123,255,0.28), rgba(149,103,238,0.08)); animation:pulse 1.2s infinite; z-index:1; transform-origin:center; }
   @keyframes pulse { 0%{transform:scale(0.8);opacity:0.7;}50%{transform:scale(1.2);opacity:0.3;}100%{transform:scale(1.4);opacity:0;} }
 
   .diary-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:1000; opacity:0; pointer-events:none; transition:opacity 0.3s; }
@@ -167,7 +171,7 @@
 
   .fullscreen-effect { position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:100; opacity:0; transition:opacity 0.22s; }
   .fullscreen-effect.active { opacity:1; }
-  .fullscreen-effect .effect-bg { position:absolute; top:0; left:0; width:100%; height:100%; background: radial-gradient(circle, rgba(183,127,255,0.85) 0%, rgba(43,11,70,0.9) 100%); animation:effectBgPulse 2.6s ease-out forwards; }
+  .fullscreen-effect .effect-bg { position:absolute; top:0; left:0; width:100%; height:100%; background: radial-gradient(circle, rgba(165,123,255,0.9) 0%, rgba(72,40,77,0.92) 100%); animation:effectBgPulse 2.6s ease-out forwards; }
   @keyframes effectBgPulse { 0%{transform:scale(0);opacity:0;}20%{transform:scale(1);opacity:1;}80%{transform:scale(1);opacity:1;}100%{transform:scale(1.2);opacity:0;} }
   .fullscreen-effect .effect-text { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:2em; max-width:90%; color:white; text-shadow:0 0 40px rgba(255,255,255,0.9); animation:effectTextPulse 3s ease-out forwards; z-index:101; text-align:center; font-weight:bold; white-space:normal; word-break:break-word; line-height:1.4; }
   @keyframes effectTextPulse { 0%{transform:translate(-50%,-50%) scale(0);opacity:0;}30%{transform:translate(-50%,-50%) scale(1.2);opacity:1;}50%{transform:translate(-50%,-50%) scale(1);opacity:1;}70%{transform:translate(-50%,-50%) scale(1.1);opacity:1;}100%{transform:translate(-50%,-50%) scale(1.2);opacity:0;} }
@@ -235,13 +239,8 @@
   <div class="main-content">
     <div class="love-saying" id="loveSaying">
       <svg class="title-svg" viewBox="0 0 360 64" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-        <defs>
-          <linearGradient id="titleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="10%" stop-color="#ff6b9d"/>
-            <stop offset="90%" stop-color="#00ffff"/>
-          </linearGradient>
-        </defs>
-        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="28" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'STKaiti', 'Segoe UI', Arial, sans-serif" fill="url(#titleGradient)">
+        <!-- Removed gradient: use currentColor for a solid title color -->
+        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="28" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'STKaiti', 'Segoe UI', Arial, sans-serif" fill="currentColor">
           TaiTugou在想老婆
         </text>
       </svg>
@@ -387,7 +386,8 @@
     function drawBackground() {
       const w = elements.bgCanvas.width, h = elements.bgCanvas.height;
       const gradient = bgCtx.createLinearGradient(0,0,w,h);
-      gradient.addColorStop(0,"#0A0028"); gradient.addColorStop(0.3,"#2D0047"); gradient.addColorStop(0.7,"#4A0A8A"); gradient.addColorStop(1,"#6A0DAD");
+  // 更加饱和、偏深的淡紫渐变以增强质感
+  gradient.addColorStop(0,"#f3ecff"); gradient.addColorStop(0.3,"#eadbff"); gradient.addColorStop(0.7,"#dcc6f8"); gradient.addColorStop(1,"#cbb0f0");
       bgCtx.fillStyle = gradient; bgCtx.fillRect(0,0,w,h);
       requestAnimationFrame(drawBackground);
     }
@@ -420,7 +420,8 @@
         pCtx.lineTo(centerX + x*size, centerY + y*size);
       }
       pCtx.closePath();
-      pCtx.strokeStyle = 'rgba(255,107,157,0.3)';
+  // 使用更饱和的淡紫描边，匹配加深后的主题
+  pCtx.strokeStyle = 'rgba(149,103,238,0.55)';
       pCtx.lineWidth = 2;
       pCtx.stroke();
       requestAnimationFrame(drawParticles);
