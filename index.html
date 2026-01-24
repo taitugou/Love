@@ -4,6 +4,8 @@
 <meta charset="utf-8"/>
 <title>一直在想你</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#a57bff">
 <style>
   :root {
     /* 高级淡紫色（加深版）：保留柔和感但增加饱和与对比以显高级） */
@@ -576,7 +578,7 @@ elements.drawButton.addEventListener('click', () => {
     try {
       const indexOneBased = Number(weekNumber);
       const indexZeroBased = indexOneBased - 1;
-      const baseUrl = 'https://love.taitugou.icu/md/';
+      const baseUrl = './md/';
       const urlOne = `${baseUrl}${indexOneBased}.md?ts=${Date.now()}`;
       const urlZero = `${baseUrl}${indexZeroBased}.md?ts=${Date.now()}`;
 
@@ -689,7 +691,47 @@ elements.drawButton.addEventListener('click', () => {
 
   function closeDiaryModal() { elements.diaryModal.classList.remove('active'); }
 
-  window.addEventListener('load', init);
+  const CACHE_NAME = 'love-site-v1';
+  async function prefetchDiaryFiles() {
+    if (!navigator.onLine) return;
+    try {
+      const cache = await caches.open(CACHE_NAME);
+      const last = parseInt(localStorage.getItem('diaryMax') || '0', 10) || 0;
+      let i = Math.max(1, last);
+      let misses = 0;
+      const cap = 500;
+      while (i <= cap && misses < 5) {
+        const url = `./md/${i}.md`;
+        try {
+          const resp = await fetch(url, { cache: 'no-store' });
+          if (resp.ok) {
+            await cache.put(url, resp.clone());
+            localStorage.setItem('diaryMax', String(i));
+            i++;
+            misses = 0;
+          } else {
+            misses++;
+            i++;
+          }
+        } catch (_) {
+          misses++;
+          i++;
+        }
+      }
+    } catch (_) {}
+  }
+
+  window.addEventListener('load', () => {
+    init();
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').then((reg) => {
+        console.log('Service Worker registered', reg);
+      }).catch((err) => {
+        console.log('Service Worker registration failed', err);
+      });
+    }
+    prefetchDiaryFiles();
+  });
 </script>
 </body>
 </html>

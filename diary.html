@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#d63384">
   <title>留言墙 · 冰冰我爱你</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
@@ -182,6 +184,12 @@
   const pageSize = 9;
   let currentPage = 1;
   let totalCount = 0;
+  const OUTBOX_KEY = "messageOutbox";
+  const CACHE_KEY = "messageCache";
+  function readOutbox(){ try { return JSON.parse(localStorage.getItem(OUTBOX_KEY)||"[]"); } catch(e){ return []; } }
+  function writeOutbox(list){ localStorage.setItem(OUTBOX_KEY, JSON.stringify(list)); }
+  function readCache(){ try{ return JSON.parse(localStorage.getItem(CACHE_KEY)||"{}"); }catch(e){ return {}; } }
+  function writeCache(obj){ localStorage.setItem(CACHE_KEY, JSON.stringify(obj)); }
 
   function log(msg){
     const t = new Date().toLocaleTimeString();
@@ -203,6 +211,7 @@
     contentText.textContent = row.content;
     const meta = document.createElement('div'); meta.className = 'meta';
     meta.textContent = new Date(row.created_at).toLocaleString();
+    if (row.local === true) meta.textContent += ' 离线待发';
     contentWrap.appendChild(contentText); contentWrap.appendChild(meta);
     left.appendChild(avatar); left.appendChild(contentWrap);
 
@@ -244,6 +253,17 @@
         .range(start, end);
       if (error) {
         log('加载失败: ' + JSON.stringify(error));
+        const cache = readCache();
+        const cachedPage = cache[String(page)];
+        msgList.innerHTML = '';
+        if (Array.isArray(cachedPage)) {
+          for (const row of cachedPage) {
+            const node = renderMessage(row);
+            msgList.appendChild(node);
+          }
+          totalCount = cache.totalCount || cachedPage.length;
+          buildPagination();
+        }
         return;
       }
       totalCount = count ?? (Array.isArray(data) ? data.length : 0);
@@ -252,10 +272,25 @@
         const node = renderMessage(row);
         msgList.appendChild(node);
       }
+      const cache = readCache();
+      cache[String(page)] = data;
+      cache.totalCount = totalCount;
+      writeCache(cache);
       buildPagination();
       log('已加载 ' + (data ? data.length : 0) + ' 条留言 (第' + page + '页)');
     } catch (err) {
       log('加载异常: ' + err.message);
+      const cache = readCache();
+      const cachedPage = cache[String(page)];
+      msgList.innerHTML = '';
+      if (Array.isArray(cachedPage)) {
+        for (const row of cachedPage) {
+          const node = renderMessage(row);
+          msgList.appendChild(node);
+        }
+        totalCount = cache.totalCount || cachedPage.length;
+        buildPagination();
+      }
     }
   }
 
@@ -281,6 +316,15 @@
     }
     if (!fromRealtime) totalCount++;
     buildPagination();
+    const cache = readCache();
+    const firstPage = Array.isArray(cache['1']) ? cache['1'] : [];
+    const existsIndex = firstPage.findIndex(x => x.id === row.id);
+    if (existsIndex >= 0) firstPage.splice(existsIndex, 1);
+    firstPage.unshift(row);
+    while (firstPage.length > pageSize) firstPage.pop();
+    cache['1'] = firstPage;
+    cache.totalCount = totalCount;
+    writeCache(cache);
   }
 
   // 移除 UI（删除成功后调用）
@@ -362,23 +406,39 @@
     sendBtn.textContent = '发送中...';
     log('开始插入...');
     try {
-      // 必须传数组并加 .select() 才返回插入后的行
-      const { data, error } = await supabaseClient
-        .from('messages')
-        .insert([{ content }])
-        .select();
-      if (error) {
-        log('插入失败: ' + JSON.stringify(error));
-      } else {
-        log('插入成功: ' + JSON.stringify(data));
+      if (!navigator.onLine) {
+        const localRow = { id: 'local-' + Date.now(), content, created_at: new Date().toISOString(), local: true };
+        const outbox = readOutbox();
+        outbox.push(localRow);
+        writeOutbox(outbox);
         contentEl.value = '';
         triggerLoveEffects();
-        // UI 会由 realtime 自动添加，但我们也可以立即插入以获得更快反馈
-        // 发送者的本地插入不显示头像（hideAvatar）
-        if (Array.isArray(data) && data.length) addMessageToUI(data[0], { hideAvatar: true });
+        addMessageToUI(localRow, { hideAvatar: true });
+      } else {
+        const { data, error } = await supabaseClient
+          .from('messages')
+          .insert([{ content }])
+          .select();
+        if (error) {
+          const localRow = { id: 'local-' + Date.now(), content, created_at: new Date().toISOString(), local: true };
+          const outbox = readOutbox();
+          outbox.push(localRow);
+          writeOutbox(outbox);
+          contentEl.value = '';
+          addMessageToUI(localRow, { hideAvatar: true });
+        } else {
+          contentEl.value = '';
+          triggerLoveEffects();
+          if (Array.isArray(data) && data.length) addMessageToUI(data[0], { hideAvatar: true });
+        }
       }
     } catch (err) {
-      log('插入异常: ' + err.message);
+      const localRow = { id: 'local-' + Date.now(), content, created_at: new Date().toISOString(), local: true };
+      const outbox = readOutbox();
+      outbox.push(localRow);
+      writeOutbox(outbox);
+      contentEl.value = '';
+      addMessageToUI(localRow, { hideAvatar: true });
     } finally {
       sendBtn.disabled = false;
       sendBtn.textContent = '发';
@@ -417,13 +477,51 @@
       log('Realtime 订阅状态: ' + JSON.stringify(status));
     });
 
+  async function syncOutbox(){
+    if (!navigator.onLine) return;
+    let outbox = readOutbox();
+    if (!Array.isArray(outbox) || outbox.length === 0) return;
+    for (const item of [...outbox]) {
+      try {
+        const { data, error } = await supabaseClient
+          .from('messages')
+          .insert([{ content: item.content }])
+          .select();
+        if (!error && Array.isArray(data) && data.length) {
+          removeMessageFromUI(item.id);
+          addMessageToUI(data[0], { hideAvatar: true });
+          outbox = outbox.filter(x => x.id !== item.id);
+          writeOutbox(outbox);
+        }
+      } catch (_) {}
+    }
+  }
+
   // ---------- 启动时加载 ----------
   (async function init(){
     log('初始化中...');
     await loadMessages();
     log('初始化完成，等待实时更新...');
+    
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').then((reg) => {
+          console.log('Service Worker registered', reg);
+        }).catch((err) => {
+          console.log('Service Worker registration failed', err);
+        });
+      });
+    }
+    const pending = readOutbox();
+    if (Array.isArray(pending) && pending.length) {
+      for (const item of pending) {
+        addMessageToUI(item, { hideAvatar: true });
+      }
+    }
   })();
 
+  window.addEventListener('online', () => { syncOutbox(); });
+  if (navigator.onLine) { syncOutbox(); }
   // 清理（页面卸载时取消订阅）
   window.addEventListener('beforeunload', () => {
     try { supabaseClient.removeChannel(channel); } catch(e){}
