@@ -185,7 +185,7 @@
     .main-content { width:95%; }
     .love-saying { font-size:2.6em; }
     .love-time { padding:1em 0.5em; }
-    .days-value { font-size:2.6em; } .hours-value { font-size:1.4em; } .minutes-value { font-size:1.4em; } .seconds-value { font-size:1.1em; } .milliseconds-value { font-size:1em; }
+    .days-value { font-size:2.6em; } .hours-value { font-size:1.4em; } .minutes-value { font-size:1.4em; } .seconds-value { font-size:1.1em; }
     .heart { width:120px; height:108px; } .heart-pulse { width:150px; height:150px; }
     .fullscreen-effect .effect-text { font-size:3em; }
     .floating-button { font-size:1.1em; padding:10px 20px; bottom:20px; }
@@ -194,7 +194,7 @@
   @media (max-width: 480px) {
     .love-saying { font-size:2em; }
     /* 更紧凑的计时显示，隐藏毫秒以节能 */
-    .days-value { font-size:2.2em; } .hours-value { font-size:1.3em; } .minutes-value { font-size:1.3em; } .seconds-value { font-size:1.1em; } .milliseconds-value { display:none; }
+    .days-value { font-size:2.2em; } .hours-value { font-size:1.3em; } .minutes-value { font-size:1.3em; } .seconds-value { font-size:1.1em; }
     .time-label { font-size:1em; }
     .heart { width:100px; height:90px; } .heart-pulse { width:130px; height:130px; }
     .fullscreen-effect .effect-text { font-size:2em; }
@@ -269,10 +269,6 @@
         <span class="time-value seconds-value" id="seconds">00</span>
         <span class="time-label">秒</span>
       </div>
-      <div class="time-line">
-        <span class="time-value milliseconds-value" id="milliseconds">000</span>
-        <span class="time-label">毫秒</span>
-      </div>
     </div>
 
     <div class="heart-container" id="heartContainer">
@@ -344,7 +340,6 @@
     hours: document.getElementById('hours'),
     minutes: document.getElementById('minutes'),
     seconds: document.getElementById('seconds'),
-    milliseconds: document.getElementById('milliseconds'),
     heartContainer: document.getElementById('heartContainer'),
     noteButton: document.getElementById('noteButton'),
     noteModal: document.getElementById('noteModal'),
@@ -500,12 +495,10 @@ elements.drawButton.addEventListener('click', () => {
       const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
       const minutes = Math.floor((diff % (1000*60*60)) / (1000*60));
       const seconds = Math.floor((diff % (1000*60)) / 1000);
-      const milliseconds = diff % 1000;
       elements.days.textContent = days;
       elements.hours.textContent = String(hours).padStart(2,'0');
       elements.minutes.textContent = String(minutes).padStart(2,'0');
       elements.seconds.textContent = String(seconds).padStart(2,'0');
-      elements.milliseconds.textContent = String(milliseconds).padStart(3,'0');
       requestAnimationFrame(updateTimer);
     }
     updateTimer();
@@ -573,52 +566,102 @@ elements.drawButton.addEventListener('click', () => {
     return Math.floor(days / 7) + 1;
   }
 
-  // 更稳健的 loadDiaryWeek：并行尝试 1-based 与 0-based URL，禁用缓存，依据响应状态决定使用哪个
+  // 预取日记文件，确保离线可用
+  async function prefetchDiaryFiles() {
+    if (!navigator.onLine) return;
+    try {
+      const cache = await caches.open('love-site-v2');
+      const diaryContentCache = JSON.parse(localStorage.getItem('diary_content_cache') || '{}');
+      
+      let i = 1;
+      let failCount = 0;
+      const MAX_FAIL = 3;
+
+      while (failCount < MAX_FAIL && i < 200) {
+        const url = `./md/${i}.md`;
+        try {
+          const response = await fetch(url, { cache: 'no-store' });
+          if (response.ok) {
+            const text = await response.text();
+            // 确保内容不是 HTML（防止某些服务器在 404 时返回 200 OK 的 HTML 页面）
+            if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+              failCount++;
+            } else {
+              await cache.put(url, new Response(text));
+              diaryContentCache[url] = text;
+              failCount = 0;
+            }
+          } else {
+            failCount++;
+          }
+        } catch (e) {
+          failCount++;
+        }
+        i++;
+      }
+      try {
+        localStorage.setItem('diary_content_cache', JSON.stringify(diaryContentCache));
+      } catch(e) { 
+        console.warn("LocalStorage 存储日记备份失败（可能已满）"); 
+      }
+    } catch(e) {
+      console.error("日记预取失败:", e);
+    }
+  }
+
+  // 修改 loadDiaryWeek 优化加载顺序
   async function loadDiaryWeek(weekNumber) {
+    const diaryContentCache = JSON.parse(localStorage.getItem('diary_content_cache') || '{}');
     try {
       const indexOneBased = Number(weekNumber);
       const indexZeroBased = indexOneBased - 1;
       const baseUrl = './md/';
-      const urlOne = `${baseUrl}${indexOneBased}.md?ts=${Date.now()}`;
-      const urlZero = `${baseUrl}${indexZeroBased}.md?ts=${Date.now()}`;
+      const urlOne = `${baseUrl}${indexOneBased}.md`;
+      const urlZero = `${baseUrl}${indexZeroBased}.md`;
 
-      // 并行发起请求（不缓存）
-      const fetchOptions = { cache: 'no-store', redirect: 'follow' };
+      const getRaw = async (url) => {
+        // 1. 优先尝试从 Service Worker Cache 读取 (离线最稳)
+        try {
+          const swCache = await caches.open('love-site-v2');
+          const cachedRes = await swCache.match(url);
+          if (cachedRes) {
+            const text = await cachedRes.text();
+            if (text && !text.trim().startsWith('<!DOCTYPE')) return text;
+          }
+        } catch(e) {}
 
-      const p1 = fetch(urlOne, fetchOptions).then(r => ({ ok: r.ok, status: r.status, text: () => r.text() })).catch(e => ({ ok:false, status:0, text: async ()=>'' }));
-      const p0 = fetch(urlZero, fetchOptions).then(r => ({ ok: r.ok, status: r.status, text: () => r.text() })).catch(e => ({ ok:false, status:0, text: async ()=>'' }));
+        // 2. 尝试从 LocalStorage 备份读取
+        if (diaryContentCache[url]) {
+          const text = diaryContentCache[url];
+          if (text && !text.trim().startsWith('<!DOCTYPE')) return text;
+        }
 
-      const [res1, res0] = await Promise.all([p1, p0]);
+        // 3. 尝试联网读取
+        try {
+          const r = await fetch(url + `?ts=${Date.now()}`, { cache: 'no-store' });
+          if (r.ok) {
+            const text = await r.text();
+            if (text && !text.trim().startsWith('<!DOCTYPE')) {
+              // 联网获取成功后，异步更新缓存
+              const cache = await caches.open('love-site-v2');
+              cache.put(url, new Response(text));
+              return text;
+            }
+          }
+        } catch(e) {}
+        
+        return null;
+      };
 
-      let raw = null;
-      let usedUrl = null;
+      let raw = await getRaw(urlOne) || await getRaw(urlZero);
 
-      // 优先使用 1-based 有效返回
-      if (res1.ok) {
-        raw = await res1.text();
-        usedUrl = urlOne;
-      } else if (res0.ok) {
-        // 如果 1-based 无效但 0-based 有，使用 0-based（兼容旧命名）
-        raw = await res0.text();
-        usedUrl = urlZero;
-      } else {
-        // 两者都不可用：设置默认并退出
-        diaryState.weekEntries = Array.from({ length: 7 }, () => ({ score: 0, text: '暂无日记' }));
-        diaryState.lastLoadedRaw = null;
+      if (!raw) {
+        diaryState.weekEntries = Array.from({ length: 7 }, () => ({ score: 0, text: '暂无日记内容，请联网加载一次。' }));
+        renderDiaryDay();
         return;
       }
-
-      // 若加载到的 raw 与上次加载相同但 weekNumber 不变，则正常；若不同 weekNumber 却相同内容，视为不可靠，回退默认
-      if (diaryState.lastLoadedRaw && diaryState.lastLoadedRaw === raw && diaryState.lastRequestedWeek && diaryState.lastRequestedWeek !== indexOneBased) {
-        // 如果不同周请求但内容与上次相同，可能是服务器返回占位页或路由重定向，使用默认防止错配
-        diaryState.weekEntries = Array.from({ length: 7 }, () => ({ score: 0, text: '暂无日记' }));
-        diaryState.lastLoadedRaw = null;
-        diaryState.lastRequestedWeek = null;
-        return;
-      }
-
+      
       diaryState.lastLoadedRaw = raw;
-      diaryState.lastRequestedWeek = indexOneBased;
 
       // 提取所有 { ... } 块；每个大括号为一天
       let blocks = [...raw.matchAll(/\{([\s\S]*?)\}/g)].map(m => m[1].trim());
@@ -691,43 +734,24 @@ elements.drawButton.addEventListener('click', () => {
 
   function closeDiaryModal() { elements.diaryModal.classList.remove('active'); }
 
-  const CACHE_NAME = 'love-site-v1';
-  async function prefetchDiaryFiles() {
-    if (!navigator.onLine) return;
-    try {
-      const cache = await caches.open(CACHE_NAME);
-      const last = parseInt(localStorage.getItem('diaryMax') || '0', 10) || 0;
-      let i = Math.max(1, last);
-      let misses = 0;
-      const cap = 500;
-      while (i <= cap && misses < 5) {
-        const url = `./md/${i}.md`;
-        try {
-          const resp = await fetch(url, { cache: 'no-store' });
-          if (resp.ok) {
-            await cache.put(url, resp.clone());
-            localStorage.setItem('diaryMax', String(i));
-            i++;
-            misses = 0;
-          } else {
-            misses++;
-            i++;
-          }
-        } catch (_) {
-          misses++;
-          i++;
-        }
-      }
-    } catch (_) {}
-  }
-
   window.addEventListener('load', () => {
     init();
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js').then((reg) => {
-        console.log('Service Worker registered', reg);
+        console.log('SW registered', reg);
+        // 如果有更新，立即应用
+        reg.onupdatefound = () => {
+          const installingWorker = reg.installing;
+          installingWorker.onstatechange = () => {
+            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              if (confirm('发现新版本，是否刷新以应用？')) {
+                window.location.reload();
+              }
+            }
+          };
+        };
       }).catch((err) => {
-        console.log('Service Worker registration failed', err);
+        console.log('SW registration failed', err);
       });
     }
     prefetchDiaryFiles();
