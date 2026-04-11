@@ -171,21 +171,42 @@
   let currentPage = 1;
   let totalCount = 0;
   let allMessages = [];
+  let lastFetchTime = 0;
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 分钟缓存
   const OUTBOX_KEY = "messageOutbox";
   const CACHE_KEY = "messageCache";
+  const DELETE_QUEUE_KEY = "deleteQueue";
   
   function readOutbox(){ try { return JSON.parse(localStorage.getItem(OUTBOX_KEY)||"[]"); } catch(e){ return []; } }
   function writeOutbox(list){ localStorage.setItem(OUTBOX_KEY, JSON.stringify(list)); }
   function readCache(){ try{ return JSON.parse(localStorage.getItem(CACHE_KEY)||"{}"); }catch(e){ return {}; } }
   function writeCache(obj){ localStorage.setItem(CACHE_KEY, JSON.stringify(obj)); }
+  function readDeleteQueue(){ try{ return JSON.parse(localStorage.getItem(DELETE_QUEUE_KEY)||"[]"); }catch(e){ return []; } }
+  function writeDeleteQueue(list){ localStorage.setItem(DELETE_QUEUE_KEY, JSON.stringify(list)); }
 
   function log(msg){
     const t = new Date().toLocaleTimeString();
     console.log(`[${t}] ${msg}`);
   }
 
-  // JSONBin API 调用函数
-  async function fetchMessages() {
+  // JSONBin API 调用函数 - 增强缓存
+  async function fetchMessages(forceRefresh = false) {
+    const now = Date.now();
+    const cache = readCache();
+    const isCacheValid = cache.data && cache.timestamp && (now - cache.timestamp) < CACHE_DURATION;
+    
+    // 优先使用缓存，除非强制刷新或缓存失效
+    if (!forceRefresh && isCacheValid) {
+      log('使用缓存数据');
+      return cache.data;
+    }
+    
+    // 避免频繁请求
+    if (!forceRefresh && now - lastFetchTime < 10000) {
+      log('使用最近请求的数据');
+      return allMessages;
+    }
+    
     try {
       const response = await fetch(`${JSONBIN_CONFIG.API_URL}/b/${JSONBIN_CONFIG.BIN_ID}`, {
         method: 'GET',
@@ -199,37 +220,108 @@
       }
       
       const result = await response.json();
-      return result.record || [];
+      let messages = result.record;
+      
+      if (!messages) {
+        return [];
+      }
+      
+      if (Array.isArray(messages)) {
+        messages = messages.filter(msg => msg && msg.id && msg.content);
+        allMessages = messages;
+        lastFetchTime = now;
+        writeCache({ data: messages, timestamp: now });
+        return messages;
+      }
+      
+      if (typeof messages === 'object' && messages.messages && Array.isArray(messages.messages)) {
+        messages = messages.messages.filter(msg => msg && msg.id && msg.content);
+        allMessages = messages;
+        lastFetchTime = now;
+        writeCache({ data: messages, timestamp: now });
+        return messages;
+      }
+      
+      if (typeof messages === 'object' && !Array.isArray(messages)) {
+        allMessages = [];
+        lastFetchTime = now;
+        writeCache({ data: [], timestamp: now });
+        return [];
+      }
+      
+      return [];
     } catch (error) {
       log('获取留言失败：' + error.message);
+      if (cache.data) {
+        log('使用离线缓存');
+        return cache.data;
+      }
       return [];
     }
   }
 
   async function saveMessage(content) {
     try {
-      const messages = await fetchMessages();
-      const newMessage = {
-        id: Date.now().toString(),
-        content: content,
-        created_at: new Date().toISOString()
-      };
-      messages.push(newMessage);
-      
       const response = await fetch(`${JSONBIN_CONFIG.API_URL}/b/${JSONBIN_CONFIG.BIN_ID}`, {
-        method: 'PUT',
+        method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
           'X-Master-Key': JSONBIN_CONFIG.API_KEY
-        },
-        body: JSON.stringify(messages)
+        }
       });
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      const result = await response.json();
+      let messages = result.record || [];
+      
+      if (Array.isArray(messages)) {
+        const newMessage = {
+          id: Date.now().toString(),
+          content: content,
+          created_at: new Date().toISOString()
+        };
+        messages.push(newMessage);
+        
+        const putResponse = await fetch(`${JSONBIN_CONFIG.API_URL}/b/${JSONBIN_CONFIG.BIN_ID}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': JSONBIN_CONFIG.API_KEY
+          },
+          body: JSON.stringify(messages)
+        });
+        
+        if (!putResponse.ok) {
+          throw new Error(`HTTP error! status: ${putResponse.status}`);
+        }
+        
+        return newMessage;
+      } else if (messages && typeof messages === 'object') {
+        const newMessage = {
+          id: Date.now().toString(),
+          content: content,
+          created_at: new Date().toISOString()
+        };
+        if (!messages.messages) {
+          messages.messages = [];
+        }
+        messages.messages.push(newMessage);
+        
+        const putResponse = await fetch(`${JSONBIN_CONFIG.API_URL}/b/${JSONBIN_CONFIG.BIN_ID}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': JSONBIN_CONFIG.API_KEY
+          },
+          body: JSON.stringify(messages)
+        });
+        
+        if (!putResponse.ok) {
+          throw new Error(`HTTP error! status: ${putResponse.status}`);
+        }
+        
+        return newMessage;
       }
       
-      return newMessage;
+      throw new Error('未知的数据格式');
     } catch (error) {
       log('保存留言失败：' + error.message);
       throw error;
@@ -238,20 +330,43 @@
 
   async function deleteMessage(messageId) {
     try {
-      const messages = await fetchMessages();
-      const filteredMessages = messages.filter(msg => msg.id !== messageId);
-      
       const response = await fetch(`${JSONBIN_CONFIG.API_URL}/b/${JSONBIN_CONFIG.BIN_ID}`, {
+        method: 'GET',
+        headers: {
+          'X-Master-Key': JSONBIN_CONFIG.API_KEY
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`获取失败：HTTP ${response.status}`);
+      }
+      
+      const result = await response.json();
+      let messages = result.record || [];
+      
+      const filteredMessages = Array.isArray(messages) 
+        ? messages.filter(msg => msg.id !== messageId)
+        : (messages.messages && Array.isArray(messages.messages) 
+            ? messages.messages.filter(msg => msg.id !== messageId)
+            : []);
+      
+      // JSONBin 不允许保存空数据，如果是空的，保存一个空对象数组标记
+      const finalData = Array.isArray(messages) 
+        ? (filteredMessages.length > 0 ? filteredMessages : [{}])
+        : { messages: filteredMessages.length > 0 ? filteredMessages : [{}] };
+      
+      const putResponse = await fetch(`${JSONBIN_CONFIG.API_URL}/b/${JSONBIN_CONFIG.BIN_ID}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'X-Master-Key': JSONBIN_CONFIG.API_KEY
         },
-        body: JSON.stringify(filteredMessages)
+        body: JSON.stringify(finalData)
       });
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (!putResponse.ok) {
+        const errorText = await putResponse.text();
+        throw new Error(`HTTP ${putResponse.status}: ${errorText}`);
       }
       
       return true;
@@ -285,12 +400,42 @@
     delBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
       if (!confirm('确认删除这条留言？')) return;
+      
+      const msgId = row.id;
+      const msgElement = msgList.querySelector(`[data-id="${msgId}"]`);
+      
+      if (msgElement) {
+        msgElement.style.opacity = '0.5';
+        msgElement.style.pointerEvents = 'none';
+        delBtn.textContent = '⏳';
+      }
+      
       try {
-        await deleteMessage(row.id);
-        log('已删除 id=' + row.id);
-        removeMessageFromUI(row.id);
+        if (row.local) {
+          const outbox = readOutbox();
+          const filtered = outbox.filter(item => item.id !== msgId);
+          writeOutbox(filtered);
+          removeMessageFromUI(msgId);
+          log('已删除本地消息');
+        } else {
+          const deleteQueue = readDeleteQueue();
+          deleteQueue.push(msgId);
+          writeDeleteQueue(deleteQueue);
+          
+          removeMessageFromUI(msgId);
+          log('已标记删除，等待同步');
+          
+          if (navigator.onLine) {
+            await processDeleteQueue();
+          }
+        }
       } catch (err) {
         log('删除异常：' + err.message);
+        if (msgElement) {
+          msgElement.style.opacity = '1';
+          msgElement.style.pointerEvents = 'auto';
+          delBtn.textContent = '🗑';
+        }
       }
     });
 
@@ -406,11 +551,11 @@
     } catch (error) {
       log('加载留言失败：' + error.message);
       const cache = readCache();
-      const cachedPage = cache[String(page)];
-      if (Array.isArray(cachedPage)) {
-        allMessages = cachedPage;
-        totalCount = cache.totalCount || cachedPage.length;
+      if (cache.data && Array.isArray(cache.data)) {
+        allMessages = cache.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        totalCount = allMessages.length;
         renderMessages(page);
+        log('使用缓存数据渲染');
       }
     }
   }
@@ -418,18 +563,22 @@
   sendBtn.addEventListener('click', async () => {
     const content = contentEl.value.trim();
     if (!content) { log('内容为空'); return; }
+    
+    const localRow = { id: 'local-' + Date.now(), content, created_at: new Date().toISOString(), local: true };
+    
     sendBtn.disabled = true;
     sendBtn.textContent = '发送中...';
     log('开始插入...');
+    
     try {
       if (!navigator.onLine) {
-        const localRow = { id: 'local-' + Date.now(), content, created_at: new Date().toISOString(), local: true };
         const outbox = readOutbox();
         outbox.push(localRow);
         writeOutbox(outbox);
         contentEl.value = '';
         triggerLoveEffects();
         addMessageToUI(localRow, { hideAvatar: true });
+        log('已保存到离线队列');
       } else {
         const newRow = await saveMessage(content);
         contentEl.value = '';
@@ -437,14 +586,16 @@
         addMessageToUI(newRow, { hideAvatar: true });
         allMessages.unshift(newRow);
         totalCount++;
+        writeCache({ data: allMessages, timestamp: Date.now() });
+        log('发送成功');
       }
     } catch (err) {
-      const localRow = { id: 'local-' + Date.now(), content, created_at: new Date().toISOString(), local: true };
       const outbox = readOutbox();
       outbox.push(localRow);
       writeOutbox(outbox);
       contentEl.value = '';
       addMessageToUI(localRow, { hideAvatar: true });
+      log('发送失败，已保存到离线队列');
     } finally {
       sendBtn.disabled = false;
       sendBtn.textContent = '发';
@@ -458,23 +609,76 @@
     }
   });
 
+  async function processDeleteQueue() {
+    if (!navigator.onLine) return;
+    let deleteQueue = readDeleteQueue();
+    if (!Array.isArray(deleteQueue) || deleteQueue.length === 0) return;
+    
+    log('开始处理删除队列，共 ' + deleteQueue.length + ' 条');
+    
+    for (const msgId of [...deleteQueue]) {
+      try {
+        await deleteMessage(msgId);
+        deleteQueue = deleteQueue.filter(id => id !== msgId);
+        writeDeleteQueue(deleteQueue);
+        log('已同步删除 id=' + msgId);
+      } catch (err) {
+        log('删除同步失败 id=' + msgId + ': ' + err.message);
+      }
+    }
+  }
+
   async function syncOutbox(){
     if (!navigator.onLine) return;
     let outbox = readOutbox();
     if (!Array.isArray(outbox) || outbox.length === 0) return;
+    
+    log('开始同步离线消息，共 ' + outbox.length + ' 条');
+    
     for (const item of [...outbox]) {
       try {
-        await saveMessage(item.content);
+        const newRow = await saveMessage(item.content);
         outbox = outbox.filter(x => x.id !== item.id);
         writeOutbox(outbox);
-        removeMessageFromUI(item.id);
-      } catch (_) {}
+        
+        const localMsg = msgList.querySelector(`[data-id="${item.id}"]`);
+        if (localMsg) {
+          localMsg.remove();
+        }
+        
+        allMessages.unshift(newRow);
+        totalCount++;
+        writeCache({ data: allMessages, timestamp: Date.now() });
+        
+        log('已同步消息 id=' + item.id);
+      } catch (err) {
+        log('消息同步失败：' + err.message);
+      }
     }
+    
+    buildPagination();
   }
 
   (async function init(){
     log('初始化中...');
+    
+    const cache = readCache();
+    const deleteQueue = readDeleteQueue();
+    const outbox = readOutbox();
+    
+    log('缓存状态：' + (cache.data ? cache.data.length : 0) + ' 条留言');
+    log('离线消息：' + outbox.length + ' 条');
+    log('待删除：' + deleteQueue.length + ' 条');
+    
     await loadMessages();
+    
+    if (navigator.onLine) {
+      await syncOutbox();
+      await processDeleteQueue();
+    } else {
+      log('当前离线，将在恢复网络后自动同步');
+    }
+    
     log('初始化完成');
     
     if ('serviceWorker' in navigator) {
@@ -494,6 +698,7 @@
         });
       });
     }
+    
     const pending = readOutbox();
     if (Array.isArray(pending) && pending.length) {
       for (const item of pending) {
@@ -502,8 +707,16 @@
     }
   })();
 
-  window.addEventListener('online', () => { syncOutbox(); });
-  if (navigator.onLine) { syncOutbox(); }
+  window.addEventListener('online', async () => {
+    log('网络已恢复，开始同步...');
+    await syncOutbox();
+    await processDeleteQueue();
+  });
+  
+  if (navigator.onLine) {
+    syncOutbox();
+    processDeleteQueue();
+  }
 </script>
 </body>
 </html>

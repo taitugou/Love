@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>JSONBin API 测试</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .result { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>JSONBin API 测试</h1>
+    
+    <div>
+        <h3>配置信息：</h3>
+        <div class="result">
+            <div>API Key: $2a$10$gOxS3GdO1P0Yl4IKa4b0xevOrhdW6pkEIwguHW3QoOvrKm3hXwq7O</div>
+            <div>Bin ID: 69da0374aaba882197e89fe4</div>
+            <div>API URL: https://api.jsonbin.io/v3</div>
+        </div>
+    </div>
+
+    <div>
+        <button onclick="testGet()">测试获取留言</button>
+        <button onclick="testPost()">测试发布留言</button>
+        <button onclick="clearLog()">清空日志</button>
+    </div>
+
+    <div id="log"></div>
+
+    <script>
+        const JSONBIN_CONFIG = {
+            API_KEY: '$2a$10$gOxS3GdO1P0Yl4IKa4b0xevOrhdW6pkEIwguHW3QoOvrKm3hXwq7O',
+            BIN_ID: '69da0374aaba882197e89fe4',
+            API_URL: 'https://api.jsonbin.io/v3'
+        };
+
+        function log(message, isError = false) {
+            const logDiv = document.getElementById('log');
+            const p = document.createElement('div');
+            p.className = isError ? 'error' : 'success';
+            p.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(p);
+            console.log(message);
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        async function testGet() {
+            log('开始测试获取留言...');
+            try {
+                const response = await fetch(`${JSONBIN_CONFIG.API_URL}/b/${JSONBIN_CONFIG.BIN_ID}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Master-Key': JSONBIN_CONFIG.API_KEY
+                    }
+                });
+
+                log(`HTTP 状态码：${response.status}`);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
+                const result = await response.json();
+                log(`成功获取数据！`);
+                log(`数据类型：${Array.isArray(result.record) ? '数组' : '其他'}`);
+                log(`留言数量：${result.record ? result.record.length : 0}`);
+                
+                if (result.record && result.record.length > 0) {
+                    log('第一条留言：' + JSON.stringify(result.record[0]));
+                }
+            } catch (error) {
+                log('获取失败：' + error.message, true);
+            }
+        }
+
+        async function testPost() {
+            log('开始测试发布留言...');
+            try {
+                // 先获取现有数据
+                const getResponse = await fetch(`${JSONBIN_CONFIG.API_URL}/b/${JSONBIN_CONFIG.BIN_ID}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Master-Key': JSONBIN_CONFIG.API_KEY
+                    }
+                });
+
+                if (!getResponse.ok) {
+                    throw new Error(`获取失败：HTTP ${getResponse.status}`);
+                }
+
+                const getResult = await getResponse.json();
+                const messages = getResult.record || [];
+                
+                // 添加新留言
+                const newMessage = {
+                    id: Date.now().toString(),
+                    content: '测试留言 ' + new Date().toLocaleString(),
+                    created_at: new Date().toISOString()
+                };
+                messages.push(newMessage);
+
+                log('准备保存 ' + messages.length + ' 条留言...');
+
+                // 保存更新后的数据
+                const putResponse = await fetch(`${JSONBIN_CONFIG.API_URL}/b/${JSONBIN_CONFIG.BIN_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': JSONBIN_CONFIG.API_KEY
+                    },
+                    body: JSON.stringify(messages)
+                });
+
+                if (!putResponse.ok) {
+                    const errorText = await putResponse.text();
+                    throw new Error(`保存失败：HTTP ${putResponse.status} - ${errorText}`);
+                }
+
+                const putResult = await putResponse.json();
+                log('成功保存留言！');
+                log('Bin 版本：' + (putResult.metadata?.version || '未知'));
+                
+                // 验证是否真的保存了
+                await testGet();
+            } catch (error) {
+                log('发布失败：' + error.message, true);
+            }
+        }
+
+        // 页面加载时自动测试一次
+        window.onload = () => {
+            log('页面加载完成，点击按钮开始测试');
+        };
+    </script>
+</body>
+</html>
