@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#d63384">
+  <title>留言墙 · 冰冰我爱你</title>
+  <style>
+    :root{
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --accent: #d63384;
+      --muted: #6b7280;
+      --glass: rgba(0,0,0,0.03);
+      --watch-size: 360px;
+    }
+    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+    body{
+      background: linear-gradient(180deg,#fbfbfd 0%, #f2f4f8 60%);
+      display:flex;align-items:center;justify-content:center;padding:20px;color:#0f1724;
+    }
+
+    .watch {
+      width: var(--watch-size);
+      max-width:92vw;
+      background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.98));
+      border-radius: 28px;
+      box-shadow: 0 10px 30px rgba(15,23,36,0.06), inset 0 1px 0 rgba(0,0,0,0.02);
+      border: 1px solid rgba(15,23,36,0.04);
+      padding: 18px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      align-items:center;
+    }
+
+    .header {
+      width:100%;
+      display:flex;align-items:center;justify-content:space-between;
+    }
+    .title {
+      display:flex;align-items:center;gap:10px;
+    }
+    .logo {
+      width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#ff9cc2);
+      display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:18px;
+      box-shadow:0 6px 18px rgba(255,107,154,0.18);
+    }
+    .title h1{margin:0;font-size:16px;letter-spacing:0.2px;}
+    .subtitle{font-size:11px;color:var(--muted);margin-top:2px;}
+
+    .list {
+      width:100%;
+      max-height:320px;
+      overflow:auto;
+      padding:8px;
+      display:flex;flex-direction:column-reverse;gap:8px;
+      border-radius:12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+    }
+    .msg {
+      display:flex;align-items:center;justify-content:space-between;
+      gap:12px;padding:10px;border-radius:10px;
+      background: rgba(243,244,246,0.6);
+      border:1px solid rgba(15,23,36,0.04);
+    }
+    .msg .left{display:flex;align-items:center;gap:10px;}
+    .avatar {
+      width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#ffd1e0,#ff9cc2);
+      display:none !important;
+      font-weight:700;color:#3b0b1a;font-size:14px;
+    }
+  .content {font-size:14px;color:#0f1724;}
+  .meta {font-size:11px;color:var(--muted);margin-top:4px;}
+
+    .actions {display:flex;gap:8px;align-items:center;}
+    .btn {
+      background:transparent;border:0;color:var(--muted);cursor:pointer;padding:6px;border-radius:8px;
+    }
+  .btn:hover{background:rgba(15,23,36,0.04);color:var(--accent);}
+
+    .composer {
+      width:100%;display:flex;gap:8px;align-items:center;
+    }
+    input[type="text"]{
+      flex:1;padding:10px 12px;border-radius:12px;border:1px solid rgba(15,23,36,0.06);
+      background:transparent;color:inherit;font-size:14px;outline:none;
+    }
+    .send {
+      background:linear-gradient(180deg,var(--accent),#ff8fb0);border:0;color:#fff;padding:10px 14px;border-radius:12px;
+      cursor:pointer;font-weight:600;box-shadow:0 6px 18px rgba(255,107,154,0.18);
+    }
+    .send:active{transform:translateY(1px);}
+
+    pre#log{width:100%;height:60px;overflow:auto;background:transparent;border-radius:8px;color:var(--muted);font-size:12px;padding:8px;margin:0;border:1px dashed rgba(255,255,255,0.02);}
+
+    .heart {
+      position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;
+      font-size:28px;opacity:0;filter:drop-shadow(0 6px 18px rgba(255,107,154,0.25));
+    }
+    .heart.fly {
+      animation: flyUp 1200ms ease-out forwards;
+    }
+    @keyframes flyUp {
+      0% { transform:translate(-50%, -10%) scale(0.6); opacity:1; }
+      40% { transform:translate(-50%, -60%) scale(1.1); opacity:1; }
+      100% { transform:translate(-50%, -180%) scale(0.8); opacity:0; }
+    }
+
+    .big-love {
+      position:fixed;left:50%;top:12%;transform:translateX(-50%);z-index:40;
+      font-size:28px;color:var(--accent);font-weight:800;opacity:0;pointer-events:none;
+      text-shadow:0 6px 30px rgba(255,107,154,0.12);
+    }
+    .big-love.show { animation: pop 900ms cubic-bezier(.2,.9,.3,1) forwards; }
+    @keyframes pop {
+      0% { transform:translateX(-50%) scale(0.6); opacity:0; }
+      40% { transform:translateX(-50%) scale(1.08); opacity:1; }
+      100% { transform:translateX(-50%) scale(1); opacity:1; }
+    }
+
+    @media (max-width:420px){
+      :root{--watch-size: 360px;}
+      .logo{width:40px;height:40px}
+      .title h1{font-size:15px}
+    }
+  </style>
+</head>
+<body>
+  <div class="watch" role="application" aria-label="留言墙">
+    <div class="header">
+      <div class="title">
+        <div class="logo">💖</div>
+        <div>
+          <h1>冰冰留言墙</h1>
+        </div>
+      </div>
+    </div>
+
+    <div class="list" id="msgList" aria-live="polite"></div>
+
+    <div class="composer">
+      <input id="content" type="text" placeholder="写点话给耀耀..." maxlength="200" />
+      <button id="sendBtn" class="send">发</button>
+    </div>
+
+    <div id="pagination" class="pagination" aria-label="分页"></div>
+  </div>
+
+  <div class="heart" id="heart">💖</div>
+  <div class="big-love" id="bigLove">冰冰 我爱你！</div>
+
+<script>
+  // ---------- JSONBin API 配置 ----------
+  const JSONBIN_CONFIG = {
+    API_KEY: '$2a$10$gOxS3GdO1P0Yl4IKa4b0xevOrhdW6pkEIwguHW3QoOvrKm3hXwq7O',
+    BIN_ID: '69da0374aaba882197e89fe4',
+    API_URL: 'https://api.jsonbin.io/v3'
+  };
+
+  const msgList = document.getElementById('msgList');
+  const contentEl = document.getElementById('content');
+  const sendBtn = document.getElementById('sendBtn');
+  const paginationEl = document.getElementById('pagination');
+  const heartEl = document.getElementById('heart');
+  const bigLoveEl = document.getElementById('bigLove');
+
+  const pageSize = 9;
+  let currentPage = 1;
+  let totalCount = 0;
+  let allMessages = [];
+  const OUTBOX_KEY = "messageOutbox";
+  const CACHE_KEY = "messageCache";
+  
+  function readOutbox(){ try { return JSON.parse(localStorage.getItem(OUTBOX_KEY)||"[]"); } catch(e){ return []; } }
+  function writeOutbox(list){ localStorage.setItem(OUTBOX_KEY, JSON.stringify(list)); }
+  function readCache(){ try{ return JSON.parse(localStorage.getItem(CACHE_KEY)||"{}"); }catch(e){ return {}; } }
+  function writeCache(obj){ localStorage.setItem(CACHE_KEY, JSON.stringify(obj)); }
+
+  function log(msg){
+    const t = new Date().toLocaleTimeString();
+    console.log(`[${t}] ${msg}`);
+  }
+
+  // JSONBin API 调用函数
+  async function fetchMessages() {
+    try {
+      const response = await fetch(`${JSONBIN_CONFIG.API_URL}/b/${JSONBIN_CONFIG.BIN_ID}`, {
+        method: 'GET',
+        headers: {
+          'X-Master-Key': JSONBIN_CONFIG.API_KEY
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      return result.record || [];
+    } catch (error) {
+      log('获取留言失败：' + error.message);
+      return [];
+    }
+  }
+
+  async function saveMessage(content) {
+    try {
+      const messages = await fetchMessages();
+      const newMessage = {
+        id: Date.now().toString(),
+        content: content,
+        created_at: new Date().toISOString()
+      };
+      messages.push(newMessage);
+      
+      const response = await fetch(`${JSONBIN_CONFIG.API_URL}/b/${JSONBIN_CONFIG.BIN_ID}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': JSONBIN_CONFIG.API_KEY
+        },
+        body: JSON.stringify(messages)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return newMessage;
+    } catch (error) {
+      log('保存留言失败：' + error.message);
+      throw error;
+    }
+  }
+
+  async function deleteMessage(messageId) {
+    try {
+      const messages = await fetchMessages();
+      const filteredMessages = messages.filter(msg => msg.id !== messageId);
+      
+      const response = await fetch(`${JSONBIN_CONFIG.API_URL}/b/${JSONBIN_CONFIG.BIN_ID}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': JSONBIN_CONFIG.API_KEY
+        },
+        body: JSON.stringify(filteredMessages)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return true;
+    } catch (error) {
+      log('删除留言失败：' + error.message);
+      throw error;
+    }
+  }
+
+  function renderMessage(row, hideAvatar = false){
+    const div = document.createElement('div');
+    div.className = 'msg';
+    div.dataset.id = row.id;
+    if (hideAvatar) div.dataset.noavatar = '1';
+    const left = document.createElement('div'); left.className = 'left';
+    const avatar = document.createElement('div'); avatar.className = 'avatar';
+    avatar.textContent = (row.content || '').slice(0,1) || '冰';
+    if (hideAvatar) avatar.style.display = 'none';
+    const contentWrap = document.createElement('div');
+    const contentText = document.createElement('div'); contentText.className = 'content';
+    contentText.textContent = row.content;
+    const meta = document.createElement('div'); meta.className = 'meta';
+    meta.textContent = new Date(row.created_at).toLocaleString();
+    if (row.local === true) meta.textContent += ' 离线待发';
+    contentWrap.appendChild(contentText); contentWrap.appendChild(meta);
+    left.appendChild(avatar); left.appendChild(contentWrap);
+
+    const actions = document.createElement('div'); actions.className = 'actions';
+    const delBtn = document.createElement('button'); delBtn.className = 'btn'; delBtn.title='删除';
+    delBtn.innerHTML = '🗑';
+    delBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!confirm('确认删除这条留言？')) return;
+      try {
+        await deleteMessage(row.id);
+        log('已删除 id=' + row.id);
+        removeMessageFromUI(row.id);
+      } catch (err) {
+        log('删除异常：' + err.message);
+      }
+    });
+
+    actions.appendChild(delBtn);
+    div.appendChild(left); div.appendChild(actions);
+    return div;
+  }
+
+  function renderMessages(page = 1){
+    currentPage = page;
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const pageMessages = allMessages.slice(startIndex, endIndex);
+    
+    msgList.innerHTML = '';
+    for (const row of pageMessages) {
+      const node = renderMessage(row);
+      msgList.appendChild(node);
+    }
+    buildPagination();
+    log('已加载 ' + pageMessages.length + ' 条留言 (第' + page + '页)');
+  }
+
+  function addMessageToUI(row, options = {}){
+    const { hideAvatar = false } = options;
+    const existing = msgList.querySelector(`[data-id="${row.id}"]`);
+    let preserveNoAvatar = false;
+    if (existing) {
+      preserveNoAvatar = existing.dataset.noavatar === '1';
+      existing.remove();
+    }
+    const useHide = preserveNoAvatar || hideAvatar;
+    
+    if (currentPage === 1) {
+      const node = renderMessage(row, useHide);
+      msgList.insertBefore(node, msgList.firstChild);
+      const items = msgList.querySelectorAll('.msg');
+      if (items.length > pageSize) items[items.length - 1].remove();
+    }
+    
+    totalCount++;
+    buildPagination();
+    
+    const cache = readCache();
+    const firstPage = Array.isArray(cache['1']) ? cache['1'] : [];
+    const existsIndex = firstPage.findIndex(x => x.id === row.id);
+    if (existsIndex >= 0) firstPage.splice(existsIndex, 1);
+    firstPage.unshift(row);
+    while (firstPage.length > pageSize) firstPage.pop();
+    cache['1'] = firstPage;
+    cache.totalCount = totalCount;
+    writeCache(cache);
+  }
+
+  function removeMessageFromUI(id){
+    const el = msgList.querySelector(`[data-id="${id}"]`);
+    if (el) {
+      el.remove();
+      totalCount = Math.max(0, totalCount - 1);
+      allMessages = allMessages.filter(msg => msg.id !== id);
+    }
+    buildPagination();
+    if (msgList.children.length === 0 && currentPage > 1) {
+      loadMessages(currentPage - 1);
+    }
+  }
+
+  function buildPagination(){
+    const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+    paginationEl.innerHTML = '';
+    const prev = document.createElement('button'); prev.textContent = '上一页'; prev.className = 'btn'; prev.disabled = currentPage <= 1; prev.addEventListener('click', () => { if (currentPage>1) loadMessages(currentPage-1); });
+    paginationEl.appendChild(prev);
+
+    const maxButtons = 7;
+    if (totalPages <= maxButtons) {
+      for (let p = 1; p <= totalPages; p++) {
+        const b = document.createElement('button'); b.textContent = p; b.className = 'btn'; if (p === currentPage) { b.disabled = true; b.style.fontWeight = '700'; }
+        b.addEventListener('click', () => loadMessages(p));
+        paginationEl.appendChild(b);
+      }
+    } else {
+      const createPageBtn = (p) => { const b = document.createElement('button'); b.textContent = p; b.className = 'btn'; if (p === currentPage) { b.disabled = true; b.style.fontWeight = '700'; } b.addEventListener('click', () => loadMessages(p)); paginationEl.appendChild(b); };
+      createPageBtn(1);
+      if (currentPage > 4) { const ell = document.createElement('span'); ell.textContent = '...'; ell.style.margin = '0 6px'; paginationEl.appendChild(ell); }
+      const start = Math.max(2, currentPage - 2);
+      const end = Math.min(totalPages - 1, currentPage + 2);
+      for (let p = start; p <= end; p++) createPageBtn(p);
+      if (currentPage < totalPages - 3) { const ell = document.createElement('span'); ell.textContent = '...'; ell.style.margin = '0 6px'; paginationEl.appendChild(ell); }
+      createPageBtn(totalPages);
+    }
+
+    const next = document.createElement('button'); next.textContent = '下一页'; next.className = 'btn'; next.disabled = currentPage >= totalPages; next.addEventListener('click', () => { if (currentPage<totalPages) loadMessages(currentPage+1); });
+    paginationEl.appendChild(next);
+  }
+
+  function triggerLoveEffects(){
+    heartEl.classList.remove('fly');
+    void heartEl.offsetWidth;
+    heartEl.classList.add('fly');
+
+    bigLoveEl.classList.remove('show');
+    void bigLoveEl.offsetWidth;
+    bigLoveEl.classList.add('show');
+    setTimeout(()=> bigLoveEl.classList.remove('show'), 1800);
+  }
+
+  async function loadMessages(page = 1){
+    try {
+      allMessages = await fetchMessages();
+      allMessages.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      totalCount = allMessages.length;
+      renderMessages(page);
+    } catch (error) {
+      log('加载留言失败：' + error.message);
+      const cache = readCache();
+      const cachedPage = cache[String(page)];
+      if (Array.isArray(cachedPage)) {
+        allMessages = cachedPage;
+        totalCount = cache.totalCount || cachedPage.length;
+        renderMessages(page);
+      }
+    }
+  }
+
+  sendBtn.addEventListener('click', async () => {
+    const content = contentEl.value.trim();
+    if (!content) { log('内容为空'); return; }
+    sendBtn.disabled = true;
+    sendBtn.textContent = '发送中...';
+    log('开始插入...');
+    try {
+      if (!navigator.onLine) {
+        const localRow = { id: 'local-' + Date.now(), content, created_at: new Date().toISOString(), local: true };
+        const outbox = readOutbox();
+        outbox.push(localRow);
+        writeOutbox(outbox);
+        contentEl.value = '';
+        triggerLoveEffects();
+        addMessageToUI(localRow, { hideAvatar: true });
+      } else {
+        const newRow = await saveMessage(content);
+        contentEl.value = '';
+        triggerLoveEffects();
+        addMessageToUI(newRow, { hideAvatar: true });
+        allMessages.unshift(newRow);
+        totalCount++;
+      }
+    } catch (err) {
+      const localRow = { id: 'local-' + Date.now(), content, created_at: new Date().toISOString(), local: true };
+      const outbox = readOutbox();
+      outbox.push(localRow);
+      writeOutbox(outbox);
+      contentEl.value = '';
+      addMessageToUI(localRow, { hideAvatar: true });
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.textContent = '发';
+    }
+  });
+
+  contentEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      sendBtn.click();
+    }
+  });
+
+  async function syncOutbox(){
+    if (!navigator.onLine) return;
+    let outbox = readOutbox();
+    if (!Array.isArray(outbox) || outbox.length === 0) return;
+    for (const item of [...outbox]) {
+      try {
+        await saveMessage(item.content);
+        outbox = outbox.filter(x => x.id !== item.id);
+        writeOutbox(outbox);
+        removeMessageFromUI(item.id);
+      } catch (_) {}
+    }
+  }
+
+  (async function init(){
+    log('初始化中...');
+    await loadMessages();
+    log('初始化完成');
+    
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').then((reg) => {
+          console.log('SW registered', reg);
+          reg.onupdatefound = () => {
+            const installingWorker = reg.installing;
+            installingWorker.onstatechange = () => {
+              if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                window.location.reload();
+              }
+            };
+          };
+        }).catch((err) => {
+          console.log('SW registration failed', err);
+        });
+      });
+    }
+    const pending = readOutbox();
+    if (Array.isArray(pending) && pending.length) {
+      for (const item of pending) {
+        addMessageToUI(item, { hideAvatar: true });
+      }
+    }
+  })();
+
+  window.addEventListener('online', () => { syncOutbox(); });
+  if (navigator.onLine) { syncOutbox(); }
+</script>
+</body>
+</html>
